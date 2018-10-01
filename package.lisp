@@ -12,6 +12,8 @@
 	   *default-display-text-font*
 	   *default-display-top-margin*
 	   *default-display-vertical-space*
+	   *dialog-point-spacing*
+	   ;; As good a place as any.
 	   action-button
 	   action-item
 	   buffer
@@ -20,11 +22,16 @@
 	   buffer-length
 	   buffer-number-lines
 	   buffer-subseq
+	   button
+	   button-dialog
 	   button-font
 	   button-label
 	   button-label-alignment
 	   button-switch
+	   change-window-documentation
 	   choice-default
+	   choice-default
+	   choice-font
 	   choice-font
 	   choice-item-font
 	   choice-item-highlight-default-p
@@ -33,7 +40,9 @@
 	   choice-item-selected-p
 	   choice-policy
 	   choice-selection
+	   choice-selection
 	   choices
+	   class-resources
 	   command
 	   command-area
 	   command-control-area
@@ -53,10 +62,19 @@
 	   contact-scale
 	   core
 	   core-shell
+	   default-resources ;; Debug aids
+	   describe-resource
+	   dialog
+	   dialog-accept
+	   dialog-button
+	   dialog-cancel
 	   dialog-default-control
+	   dialog-item
 	   display-bottom-margin
 	   display-gravity
 	   display-horizontal-space
+	   display-image
+	   display-image-source
 	   display-left-margin
 	   display-right-margin
 	   display-text
@@ -99,6 +117,9 @@
 	   make-choices
 	   make-command
 	   make-confirm
+	   make-dialog-button
+	   make-dialog-item
+	   make-display-image
 	   make-display-text
 	   make-display-text-field
 	   make-edit-text
@@ -106,6 +127,8 @@
 	   make-form
 	   make-horizontal-link
 	   make-menu
+	   make-multiple-choices
+	   make-property-sheet
 	   make-scroll-frame
 	   make-scroller
 	   make-slider
@@ -119,10 +142,15 @@
 	   menu-title
 	   millimeter-pixels
 	   move-mark
+	   multiple-choices
 	   pixel-inches
 	   pixel-millimeters
 	   pixel-points
+	   pixel-round
 	   point-pixels
+	   present-dialog
+	   property-sheet
+	   property-sheet-area
 	   rescale
 	   scale-increment
 	   scale-indicator-size
@@ -161,33 +189,7 @@
 	   text-command
 	   text-command-table
 	   toggle-button
-	   *dialog-point-spacing*
-	   pixel-round
-	   dialog-button
-	   dialog-item
-	   make-dialog-item
-	   make-dialog-button
-	   button-dialog
-	   ;; As good a place as any.
-	   present-dialog
-	   make-display-image
-	   display-image
-	   display-image-source
-	   choice-default
-	   choice-font
-	   choice-selection
-	   make-multiple-choices
-	   multiple-choices
-	   make-property-sheet
-	   property-sheet
-	   property-sheet-area
-	   dialog-accept
-	   dialog-cancel
-	   window-documentation
-	   change-window-documentation
-	   default-resources ;; Debug aids
-	   class-resources
-	   describe-resource))
+	   window-documentation))
 
 (defpackage :clio-example
   (::use :cl :xlib :clue :clio-open)

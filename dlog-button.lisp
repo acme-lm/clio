@@ -17,17 +17,15 @@
 ;;;                                                                                  |
 ;;;----------------------------------------------------------------------------------+
 
-;;;
-;;;  Dialog-button and dialog-item, buttons and items that bring up general
-;;;  dialogs when messed with.  Dialogs include menus, property-sheets, commands,
-;;;  and confirms.  Also defined here is the menu protocol event translations,
-;;;  for press-drag-release and click-move-click.
+;;;  Dialog-button and dialog-item, buttons and items that bring up
+;;;  general dialogs when messed with.  Dialogs include menus,
+;;;  property-sheets, commands, and confirms.  Also defined here is
+;;;  the menu protocol event translations, for press-drag-release and
+;;;  click-move-click.
 
 
-(in-package "CLIO-OPEN")
+(in-package :clio-open)
 
-
-;;;
 ;;;  Contact definitions and interface functions.
 
 (defcontact dialog-button (action-button)
@@ -147,7 +145,7 @@ to bring up a submenu.")
    (associate-dialog-with-button (button-dialog item) item))
 
 (defmethod associate-dialog-with-button ((new-dialog t) button)
-   (with-slots (dialog) (the dialog-button button)
+   (with-slots (dialog)  button
      (setq dialog new-dialog)))
 
 (defmethod associate-dialog-with-button :after ((new-dialog menu) button)
