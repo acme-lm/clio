@@ -23,22 +23,11 @@
 
 (in-package "CLIO-OPEN")
 
-(EXPORT '(
-	  choices
-	  choice-default
-	  choice-font
-	  choice-policy
-	  choice-selection
-	  make-choices
-	  ))
 
-
-;;;  ============================================================================
-;;;	              T h e   C H O I C E S   C o n t a c t
-;;;  ============================================================================
+;;; The CHOICES Contact
 
 (defcontact choices (table)
-  
+
   ((font 	:type 		fontable
 	 	:accessor	choice-font
 		:initarg	:font
@@ -57,12 +46,12 @@
 		:accessor	choice-policy
 		:initarg	:choice-policy
 		:initform	:one-or-none))
-  
+
   (:resources
     font
     (default-selection :type symbol :initform nil)
     (choice-policy     :type (member :always-one :one-or-none)
-		       :initform :one-or-none) 
+		       :initform :one-or-none)
     (horizontal-space  :initform -1)
     (vertical-space    :initform -1))
 
@@ -71,7 +60,6 @@
 
 
 (DEFUN make-choices (&rest initargs &key &allow-other-keys)
-  (DECLARE (VALUES choices))
   (APPLY #'make-contact 'choices initargs))
 
 ;;  Add our callbacks to each child as it is added, before anybody else gets in ahead of us...
@@ -91,7 +79,7 @@
 			  ;; Following allows deselection of old selection
 			  ;; when transitioning to new selection. [See
 			  ;; (SETF choice-selection) for details.]
-			  (boundp '*within-setf-choice-selection*))) 
+			  (boundp '*within-setf-choice-selection*)))
 	 (:one-or-none t)))
 
      ;;; ===============================================================================
@@ -156,7 +144,7 @@
 
      ;; ================================================================================
      ;;	This :on callback deselects currently selected child (if any) and
-     ;;        resets the choice selection to point to the specified child. 
+     ;;        resets the choice selection to point to the specified child.
      ;;
      (choices-on (choices self)
 	(change-choices-selection choices self)))
@@ -218,36 +206,34 @@
 
 (defun change-choices-selection (choices child-to-be-selected)
   (declare (type (or null contact) child-to-be-selected))
-  (declare (values child-to-be-selected))
-  
   (with-slots (children selection) (the choices choices)
-    (unless (eq selection child-to-be-selected)   
-      
+    (unless (eq selection child-to-be-selected)
+
       ;;  Don't check for compliance while we're in the middle of a change...
       (unless (boundp '*within-setf-choice-selection*)
 	(assert
 	  (or child-to-be-selected (eq (choice-policy choices) :one-or-none)) nil
 	  "Violating :always-one choice policy of choices contact ~a." choices))
-      
+
       (let ((*within-setf-choice-selection* t))
 	(declare (special *within-setf-choice-selection*))
-	
+
 	;;  Make sure the caller's selection is indeed a child of ours...
 	(assert
 	  (or (null child-to-be-selected) (member child-to-be-selected children)) nil
-	  "Selection ~a is not a child of ~a." child-to-be-selected choices)            
-	
+	  "Selection ~a is not a child of ~a." child-to-be-selected choices)
+
 	;; We must do things in just the right order here in case choice
 	;; policy is :always-one, in which case turning off the old
 	;; choice-item-selected-p is a bit tricky. In particular, the
 	;; :change-allowed callback will fail unless we first update the
 	;; current choices selection with the new value so it knows the
-	;; choice policy will not be violated. 
-	
-	(let ((old-selection selection)) 
+	;; choice policy will not be violated.
+
+	(let ((old-selection selection))
 	  (when old-selection (setf (choice-item-selected-p old-selection) nil))
 	  (setf selection child-to-be-selected)))))
-      
+
   child-to-be-selected)
 
 (defmethod (setf choice-selection) (child-to-be-selected (choices choices))
@@ -264,7 +250,7 @@
 ;;;
 
 (DEFMETHOD (SETF choice-font) (new-value (choices choices))
-  
+
   (with-slots (children font) choices
     (IF new-value
 	(PROGN
@@ -287,7 +273,7 @@
     (ECASE new-policy
       (:always-one				; Make sure one child is selected...
        (when (null selection)
-	 (if default 
+	 (if default
 	     (setf (choice-selection choices)  default)
 	     (if children
 		 (setf (choice-selection choices) (first children))

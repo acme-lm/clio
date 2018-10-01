@@ -20,21 +20,7 @@
 
 
 
-(in-package "CLIO-OPEN")
-
-(export '(
-	  make-scroller
-	  scale-increment
-	  scale-indicator-size
-	  scale-maximum
-	  scale-minimum
-	  scale-orientation
-	  scale-update
-	  scale-update-delay
-	  scale-value
-	  scroller
-	  )
-	'clio-open)
+(in-package :clio-open)
 
 
 ;;;----------------------------------------------------------------------------+
@@ -68,44 +54,44 @@
 ;; vector of functions to handle the :button-press (see PRESS-HANDLERS).
 
 
-(defcontact scroller (core contact)  
+(defcontact scroller (core contact)
   ((increment 	:type 		number
 	 	:reader         scale-increment	       ; setf defined below
 		:initarg	:increment
 	 	:initform 	1)
-   
+
    (indicator-size
                 :type 		(or number (member :off))
 		:reader         scale-indicator-size   ; setf defined below
 		:initarg	:indicator-size
 		:initform 	0)
-   
+
    (maximum 	:type 		number
 	 	:reader         scale-maximum	       ; setf defined below
 		:initarg	:maximum
 	 	:initform 	1)
-   
+
    (minimum 	:type 		number
 	 	:reader         scale-minimum	       ; setf defined below
 		:initarg	:minimum
 	 	:initform 	0)
-   
+
    (orientation :type 		(member :horizontal :vertical)
 	 	:reader         scale-orientation      ; setf defined below
 		:initarg	:orientation
 	 	:initform 	:vertical)
-   
+
    (update-delay :type		(or number (member :until-done))
 		 :reader         scale-update-delay    ; setf defined below
 		 :initarg	:update-delay
 		 :initform	0)
-   
+
    (value 	:type 		number
 	 	:reader         scale-value	       ; setf defined below
 		:initarg	:value
 	 	:initform 	0)
-   
-   (compress-exposures 
+
+   (compress-exposures
                 :initform       :on
 		:type           (member :off :on)
 		:reader         contact-compress-exposures
@@ -113,7 +99,7 @@
 
    (regions     :type           (vector window)
 		:initform       (make-array 6)))
-  
+
   (:resources
     increment indicator-size maximum minimum orientation update-delay value
     (border-width :initform 0)
@@ -154,7 +140,7 @@
        (if (eq orientation :vertical)
 	   (values (pixel-round (- width anchor-width) 2) 0 (- anchor-width 2) (- anchor-height 2))
 	   (values 0 (pixel-round (- height anchor-width) 2) (- anchor-height 2) (- anchor-width 2)))))
-   
+
    (max-anchor-geometry
      (dimensions scroller orientation width height)
      (declare (ignore scroller))
@@ -163,20 +149,20 @@
        (if (eq orientation :vertical)
 	   (values (pixel-round (- width anchor-width) 2) (- height anchor-height) (- anchor-width 2) (- anchor-height 2))
 	   (values (- width anchor-height) (pixel-round (- height anchor-width) 2) (- anchor-height 2) (- anchor-width 2)))))
-   
+
    (elevator-geometry
-     (dimensions scroller orientation width height) 
+     (dimensions scroller orientation width height)
      (let ((anchor-width  (scrollbar-anchor-width dimensions)))
        (if (eq orientation :vertical)
 	   (values (pixel-round (- width anchor-width) 2) (scroller-value-position scroller) anchor-width (scrollbar-elevator-size scroller))
 	   (values (scroller-value-position scroller) (pixel-round (- height anchor-width) 2) (scrollbar-elevator-size scroller) anchor-width))))
-   
+
    (less-arrow-geometry
      (dimensions scroller orientation width height)
      (declare (ignore scroller orientation width height))
      (let ((anchor-width  (scrollbar-anchor-width dimensions)))
        (values 0 0 anchor-width anchor-width)))
-   
+
    (more-arrow-geometry
      (dimensions scroller orientation width height)
      (declare (ignore width height))
@@ -185,7 +171,7 @@
        (if (eq orientation :vertical)
 	   (values 0 (+ anchor-width (if abbreviated-p 0 anchor-width)) anchor-width anchor-width)
 	   (values (+ anchor-width (if abbreviated-p 0 anchor-width)) 0 anchor-width anchor-width))))
-   
+
    (drag-area-geometry
      (dimensions scroller orientation width height)
      (declare (ignore scroller width height))
@@ -193,11 +179,11 @@
        (if (eq orientation :vertical)
 	   (values 0 anchor-width anchor-width anchor-width)
 	   (values anchor-width 0 anchor-width anchor-width))))
-   
+
    (reconfigure-controls (self)
      (declare (type scroller self))
-     (with-slots (regions width height orientation) (the scroller self) 
-      (let ((dimensions (getf *scrollbar-dimensions* (contact-scale self)))) 
+     (with-slots (regions width height orientation) (the scroller self)
+      (let ((dimensions (getf *scrollbar-dimensions* (contact-scale self))))
 	(let ((window (svref regions *min-anchor-region*)))
 	  (with-state (window)
 	    (multiple-value-bind (window-x window-y window-width window-height)
@@ -251,8 +237,8 @@
     ;; Create control region windows
     (with-slots (regions width height orientation foreground) self
       (let*
-	((dimensions    (getf *scrollbar-dimensions* (contact-scale self))) 
-	 
+	((dimensions    (getf *scrollbar-dimensions* (contact-scale self)))
+
 	 (min-anchor    (multiple-value-bind (region-x region-y region-width region-height)
 			    (min-anchor-geometry dimensions self orientation width height)
 			  (create-window
@@ -265,7 +251,7 @@
 			    :border-width 1
 			    :border foreground
 			    :gravity (if (eq orientation :vertical) :north :west))))
-	 
+
 	 (max-anchor    (multiple-value-bind (region-x region-y region-width region-height)
 			    (max-anchor-geometry dimensions self orientation width height)
 			  (create-window
@@ -278,7 +264,7 @@
 			    :border-width 1
 			    :border foreground
 			    :gravity (if (eq orientation :vertical) :north :west))))
-	 
+
 	 (elevator      (multiple-value-bind (region-x region-y region-width region-height)
 			    (elevator-geometry dimensions self orientation width height)
 			  (create-window
@@ -289,7 +275,7 @@
 			    :height region-height
 			    :border-width 0
 			    :gravity (if (eq orientation :vertical) :north :west))))
-	 
+
 	 (drag-area     (multiple-value-bind (region-x region-y region-width region-height)
 			    (drag-area-geometry dimensions self orientation width height)
 			  (create-window
@@ -300,7 +286,7 @@
 			    :width  region-width
 			    :height region-height
 			    :border-width 0)))
-	 
+
 	 (less-arrow    (multiple-value-bind (region-x region-y region-width region-height)
 			    (less-arrow-geometry dimensions self orientation width height)
 			  (create-window
@@ -311,7 +297,7 @@
 			    :width  region-width
 			    :height region-height
 			    :border-width 0)))
-	 
+
 	 (more-arrow    (multiple-value-bind (region-x region-y region-width region-height)
 			    (more-arrow-geometry dimensions self orientation width height)
 			  (create-window
@@ -322,14 +308,14 @@
 			    :width  region-width
 			    :height region-height
 			    :border-width 0))))
-	
+
 	(setf (svref regions *min-anchor-region*) min-anchor)
 	(setf (svref regions *max-anchor-region*) max-anchor)
 	(setf (svref regions *elevator-region*)   elevator)
 	(setf (svref regions *drag-area-region*)  drag-area)
 	(setf (svref regions *less-arrow-region*) less-arrow)
 	(setf (svref regions *more-arrow-region*) more-arrow)
-	
+
 	(map-subwindows self)
 	(map-subwindows elevator))))
 
@@ -339,7 +325,7 @@
       (multiple-value-bind (rw rh) (if (eq :vertical orientation) (values 0 nil) (values nil 0))
 	(multiple-value-bind (pw ph) (preferred-size self :width rw :height rh)
 	  (change-geometry self :width pw :height ph :accept-p t))))
-    
+
     (when (realized-p self)
       (reconfigure-controls self)))
 
@@ -347,14 +333,14 @@
     (with-slots (orientation width height) scroller
       (unless (eq orientation new-orientation)
 	(check-type new-orientation (member :horizontal :vertical))
-	
+
 	(setf orientation new-orientation)
-	
+
 	(multiple-value-bind (new-width new-height)
 	    (preferred-size scroller :width height :height width)
 	  (change-geometry scroller :width new-width :height new-height))
 	(reconfigure-controls scroller)))
-    
+
     new-orientation))
 
 
@@ -369,13 +355,13 @@
   (with-slots (update-delay) scroller
     (assert (or (eq new-update-delay :until-done)
 		(and (numberp new-update-delay) (not (minusp new-update-delay)))) ()
-	    "~a is neither :UNTIL-DONE or a non-negative number." new-update-delay)    
+	    "~a is neither :UNTIL-DONE or a non-negative number." new-update-delay)
     (setf update-delay new-update-delay)))
 
 (defmethod (setf scale-value) (new-value (scroller scroller))
   (scale-update scroller :value new-value)
   new-value)
-    
+
 (defmethod (setf scale-minimum) (new-minimum (scroller scroller))
   (scale-update scroller :minimum new-minimum)
   new-minimum)
@@ -405,8 +391,8 @@
      regions
      orientation)
     scroller
-    
-    
+
+
     (setf minimum        (or minimum current-min)
 	  maximum        (or maximum current-max)
 	  value          (or value current-val)
@@ -438,13 +424,13 @@
        (prev-max         current-max)
        (prev-ind         current-ind)
        (prev-val         current-val))
-      
+
       (setf current-min minimum
 	    current-max maximum
 	    current-val value
 	    current-ind indicator-size
 	    current-inc increment)
-      
+
       ;; Update display
       (when (realized-p scroller)
 	(cond
@@ -452,14 +438,14 @@
 	   (display scroller))
 
 	  ((not (eql current-val prev-val))
-	   
+
 	   ;; Position elevator
 	   (let ((position (scroller-value-position scroller))
 		 (elevator (svref regions *elevator-region*)))
 	     (if (eq :vertical orientation)
 		 (setf (drawable-y elevator) position)
 		 (setf (drawable-x elevator) position)))
-	   
+
 	   ;; Dim arrows, if necessary
 	   (scrollbar-update-less-arrow scroller less-arrow-dim-p insensitive-p)
 	   (scrollbar-update-more-arrow scroller more-arrow-dim-p insensitive-p)))))))
@@ -483,7 +469,7 @@
   (declare (ignore border-width))
   (with-slots (orientation (current-height height) (current-width width)) self
     (let*
-      ((dimensions       (getf *scrollbar-dimensions* (contact-scale self))) 
+      ((dimensions       (getf *scrollbar-dimensions* (contact-scale self)))
        (margin           (scrollbar-margin dimensions))
        (anchor-width     (scrollbar-anchor-width dimensions))
        (anchor-height    (scrollbar-anchor-height dimensions))
@@ -494,7 +480,7 @@
 			   ;; Suggested or current height
 			   (or (if (eq orientation :vertical) height width)
 			       (if (eq orientation :vertical) current-height current-width))
-			   
+
 			   ;; Size of abbreviated scrollbar (no drag area)
 			   (+ anchor-height margin
 			      anchor-width  anchor-width
@@ -521,25 +507,25 @@
 				   1))
 	     (elevator          (svref regions *elevator-region*))
 	     (elevator-position (scroller-value-position self)))
-	    
+
 	    ;; Reposition max anchor
 	    (if (eq orientation :vertical)
 		(setf (drawable-y max-anchor) anchor-position)
 		(setf (drawable-x max-anchor) anchor-position))
-	    
+
 	    ;; Reconfigure elevator
 	    (multiple-value-bind (elevator-size abbreviated-after-p)
 		(scrollbar-elevator-size self)
 	      (with-state (elevator)
 		(case orientation
-		  (:vertical	      
+		  (:vertical
 		   (setf (drawable-y elevator)      elevator-position)
 		   (setf (drawable-height elevator) elevator-size))
-		  
+
 		  (:horizontal
 		   (setf (drawable-x elevator)      elevator-position)
 		   (setf (drawable-width elevator)  elevator-size))))
-	      
+
 	      ;; Changing abbreviation?
 	      (unless (eq abbreviated-before-p abbreviated-after-p)
 		;; Reposition more-arrow region
@@ -548,26 +534,26 @@
 		  (if (eq orientation :vertical)
 		      (setf (drawable-y (svref regions *more-arrow-region*)) more-arrow-pos)
 		      (setf (drawable-x (svref regions *more-arrow-region*)) more-arrow-pos)))
-		
+
 		;; Redisplay elevator image
 		(scrollbar-display-elevator self scale)))))
 	resized-p)
-      
+
       ;; If not yet realized, just do it
       (call-next-method)))
-	
+
 
 
 (defun scrollbar-abbreviated-p (scroller)
   (with-slots (width height orientation) (the scroller scroller)
     (let*
-      ((dimensions       (getf *scrollbar-dimensions* (contact-scale scroller))) 
+      ((dimensions       (getf *scrollbar-dimensions* (contact-scale scroller)))
        (margin           (scrollbar-margin dimensions))
        (anchor-width     (scrollbar-anchor-width dimensions))
        (anchor-height    (scrollbar-anchor-height dimensions)))
 
       (<= (if (eq orientation :vertical) height width)
-	  
+
 	  (+ anchor-height margin
 	     anchor-width anchor-width anchor-width
 	     margin anchor-height)))))
@@ -617,7 +603,7 @@
 ;;;                                                                            |
 ;;;----------------------------------------------------------------------------+
 
-(defmethod display ((self scroller) &optional at-x at-y at-width at-height &key)  
+(defmethod display ((self scroller) &optional at-x at-y at-width at-height &key)
   (with-slots (width height foreground regions orientation) self
     ;; Default exposed rectangle, if necessary
     (setf at-x      (or at-x      0)
@@ -651,7 +637,7 @@
       ;; The following algorithm is a compromise.  If the exposed area is  entirely  |
       ;; on one side of the  elevator (as it is  in the case of  an elevator move),  |
       ;; then we redraw the cable only on that side.                                 |
-      ;;                                                                             | 
+      ;;                                                                             |
       ;;-----------------------------------------------------------------------------+
 
       (flet
@@ -664,16 +650,16 @@
 	       ((>= elevator-position (+ exposed-position exposed-size))
 		;; Redraw only first part of cable.
 		(values min (- elevator-position min)))
-	       
+
 	       ;; Exposed area behind elevator?
 	       ((>= exposed-position elevator-end)
 		;; Redraw only last part of cable.
 		(values elevator-end (- max elevator-end)))
-	       
+
 	       (t
 		;; Redraw all of cable.
 		(values min (- max min)))))))
-	   
+
       (multiple-value-bind (cable-x cable-y cable-width cable-height)
 	  (if (eq orientation :vertical)
 	      (multiple-value-bind (cy ch) (exposed-cable-segment at-y at-height height)
@@ -720,7 +706,7 @@
 				:fill-style :solid
 				:foreground foreground)
 	      (draw-rectangle self gc pi-x pi-y pi-width pi-height :fill-p))))))
-      
+
       ;; Clear cable margin around elevator
       (multiple-value-bind (gap-x gap-y gap-width gap-height)
 	  (if (eq orientation :vertical)
@@ -731,7 +717,7 @@
 		(- elevator-position cable-margin) 0
 		(+ cable-margin elevator-size cable-margin) nil))
 	(clear-area self :x gap-x :y gap-y :width gap-width :height gap-height))
-      
+
       ;; Compute elevator geometry
       (multiple-value-bind (elevator-x elevator-y elevator-width elevator-height)
 	  (if (eq orientation :vertical)
@@ -742,9 +728,9 @@
 		elevator-size)
 	      (values
 		elevator-position
-		(scrollbar-margin dimensions)				
+		(scrollbar-margin dimensions)
 		elevator-size
-		anchor-width))	
+		anchor-width))
 	(when
 	  ;; Exposed area intersects elevator?
 	  (and (< elevator-x (+ at-x at-width))
@@ -758,7 +744,7 @@
 
 (defun scrollbar-display-elevator (scroller &optional scale)
   (setf scale (or scale (contact-scale scroller)))
-  
+
   (with-slots (orientation regions foreground) (the scroller scroller)
     ;; Draw elevator image
     (let*
@@ -768,7 +754,7 @@
 		   :foreground foreground
 		   :background (contact-current-background-pixel scroller)))
        (elevator (svref regions *elevator-region*)))
-      
+
       (using-gcontext (gc :drawable scroller :exposures :off)
 	(copy-area
 	  mask gc
@@ -776,48 +762,48 @@
 	  (image-width image) (image-height image)
 	  elevator
 	  0 0)
-	
+
 	(when (scrollbar-abbreviated-p scroller)
 	  (let ((copy-size (scrollbar-anchor-width (getf *scrollbar-dimensions* scale))))
-	    
+
 	    (multiple-value-bind (from-x from-y copy-width copy-height)
 		(if (eq :vertical orientation)
 		    (values 0 (+ copy-size copy-size) copy-size (+ copy-size 2))
 		    (values (+ copy-size copy-size) 0 (+ copy-size 2) copy-size))
-	      
+
 	      (multiple-value-bind (to-x to-y)
 		  (if (eq :vertical orientation)
 		      (values 0 copy-size)
 		      (values copy-size 0))
-		
+
 		(copy-area
 		  mask gc
 		  from-x from-y
-		  copy-width copy-height		  
+		  copy-width copy-height
 		  elevator
 		  to-x to-y))))))))
-  
+
   ;; Dim arrows, if necessary
   (let ((insensitive-p (not (sensitive-p scroller))))
     (scrollbar-update-less-arrow scroller nil insensitive-p)
     (scrollbar-update-more-arrow scroller nil insensitive-p)))
 
 
- 
+
 (defun scrollbar-update-less-arrow (scroller dim-p insensitive-p)
   (with-slots (value minimum foreground regions) (the scroller scroller)
     (unless (eq dim-p (or insensitive-p (= value minimum)))
 
       (multiple-value-bind (arrow-x arrow-y arrow-width arrow-height)
 	  (scrollbar-less-arrow-geometry scroller)
-	
+
 	(using-gcontext
 	  (gc :drawable   scroller
 	      :function   boole-xor
 	      :fill-style :stippled
 	      :foreground (logxor foreground (contact-current-background-pixel scroller))
 	      :stipple    (contact-image-mask scroller 25%gray :depth 1))
-	  
+
 	  (draw-rectangle
 	    (svref regions *elevator-region*) gc
 	    arrow-x arrow-y
@@ -831,14 +817,14 @@
 
       (multiple-value-bind (arrow-x arrow-y arrow-width arrow-height)
 	  (scrollbar-more-arrow-geometry scroller)
-	
+
 	(using-gcontext
 	  (gc :drawable   scroller
 	      :function   boole-xor
 	      :fill-style :stippled
 	      :foreground (logxor foreground (contact-current-background-pixel scroller))
 	      :stipple    (contact-image-mask scroller 25%gray :depth 1))
-	      
+
 	  (draw-rectangle
 	    (svref regions *elevator-region*) gc
 	    arrow-x arrow-y
@@ -871,10 +857,10 @@
       (with-slots (regions orientation) scroller
 	(with-event (child x y)
 	  (if child
-	      
+
 	      ;; Look up event child window among scroller regions
 	      (let ((region (position child regions :test #'eq)))
-		
+
 		(if (= region *elevator-region*)
 		    ;; Which part of elevator got the press: less-arrow, drag-area, or more-arrow?
 		    (let
@@ -889,13 +875,13 @@
 			       (scrollbar-abbreviated-p scroller))
 			  *more-arrow-region*
 			  region))
-		    
+
 		    ;; Min/max anchor press
 		    region))
-	      
+
 	      ;; Event occurred on non-child area of scroller
 	      *cable-region*))))
-    
+
     (press-cable (scroller)
       (with-slots (orientation increment width height indicator-size update-delay display value) scroller
 	(with-event (x y)
@@ -912,7 +898,7 @@
 				   ;; Decrement by pane?
 				   (when (>= event-position min-position)
 				     (- pane-size))
-				   
+
 				   ;; Increment by pane?
 				   (when (<= event-position max-position)
 				     pane-size))))
@@ -921,7 +907,7 @@
 		(catch :release (loop (process-next-event display)))
 		(return-from press-cable))
 
-	    
+
 	      (if (catch :release
 		     ;; If user is clicking fast on cable, then we can arrive here
 		     ;; before all :exposure's from previous clicks have been processed.
@@ -939,10 +925,10 @@
 		      ;; Set timer for update
 		      (when (and (numberp update-delay) (plusp update-delay))
 			(add-timer scroller :update-delay update-delay))
-		      
+
 		      ;; Increment and warp pointer as needed, until release event
 		      (apply-callback scroller :begin-continuous)
-		      (catch :release		  
+		      (catch :release
 			(loop
 			  (scroller-increment-value scroller pane-increment)
 			  (multiple-value-setq (current-x current-y)
@@ -950,22 +936,22 @@
 			      scroller pane-increment
 			      current-x current-y
 			      min-position max-position))
-			  
+
 			  ;; Wait for timeout to elapse
 			  (do () ((not (process-next-event display *scroller-hold-timeout*))))))
 		      (apply-callback scroller :end-continuous))
-		
+
 		    ;; Single click -- increment value
 		    (progn
 		      (scroller-increment-value scroller pane-increment)
-		      
+
 		      ;; Warp pointer to keep it between elevator and anchor
 		      (scrollbar-cable-warp
 			scroller pane-increment
 			x y
 			min-position max-position)))
-		  
-	    ;; Report final value, if necessary		   		    
+
+	    ;; Report final value, if necessary
 	    (unless (eql 0 update-delay)
 	      (delete-timer scroller :update-delay)
 	      (apply-callback scroller :new-value value)))))))
@@ -975,15 +961,15 @@
 	(let
 	  ((highlight-pixel (logxor foreground (contact-current-background-pixel scroller)))
 	   (elevator        (svref regions *elevator-region*)))
-	  
+
 	  (multiple-value-bind (drag-x drag-y drag-width drag-height)
 	      (scrollbar-drag-area-geometry scroller)
-	    
+
 	    (using-gcontext
 	      (gc :drawable       scroller
 		  :function       boole-xor
 		  :foreground     highlight-pixel)
-	      
+
 	      ;; Highlight drag area
 	      (draw-rectangle
 		elevator gc
@@ -993,15 +979,15 @@
 		(let ((*previous-position* (if (eq :vertical orientation) y x))
 		      (*drag-motion*       t))
 		  (declare (special *previous-position* *drag-motion*))
-		  
+
 		  ;; Set timer for update
 		  (when (and (numberp update-delay) (plusp update-delay))
 		    (add-timer scroller :update-delay update-delay))
 
 		  ;; Handle motion events until release.
 		  (catch :release
-		    (loop (process-next-event display))))) 
-	      
+		    (loop (process-next-event display)))))
+
 	      ;; Report final value.
 	      (when (and (numberp update-delay) (plusp update-delay))
 		(delete-timer scroller :update-delay))
@@ -1011,7 +997,7 @@
 	      (draw-rectangle
 		elevator gc
 		drag-x drag-y drag-width drag-height :fill-p))))))
-    
+
     (press-less-arrow (scroller)
       (with-slots (display regions value maximum increment update-delay foreground orientation) scroller
 	(let
@@ -1019,29 +1005,29 @@
 
 	  (multiple-value-bind (arrow-x arrow-y arrow-width arrow-height)
 	      (scrollbar-less-arrow-geometry scroller)
-	    
+
 	    (using-gcontext
 	      (gc :drawable       scroller
 		  :function       boole-xor
 		  :foreground     highlight-pixel)
-	      
+
 	      ;; Highlight arrow
 	      (draw-rectangle
 		(svref regions *elevator-region*) gc
-		arrow-x arrow-y arrow-width arrow-height :fill-p)      
+		arrow-x arrow-y arrow-width arrow-height :fill-p)
 
 	      ;; Force pointer to stay within arrow window
 	      (grab-pointer scroller #.(make-event-mask :button-press :button-release)
 			    :confine-to (svref regions *less-arrow-region*))
-		    
+
 	      (if (catch :release (not (process-next-event display *scroller-click-timeout*)))
-		  
+
 		  ;; Perform continuous scrolling...
 		  (progn
 		    ;; Set timer for update
 		    (when (and (numberp update-delay) (plusp update-delay))
 		      (add-timer scroller :update-delay update-delay))
-		    
+
 		    ;; Increment until release event
 		    (apply-callback scroller :begin-continuous)
 		    (catch :release
@@ -1049,18 +1035,18 @@
 			(scroller-increment-value scroller (- increment))
 			(do () ((not (process-next-event display *scroller-hold-timeout*))))))
 		    (apply-callback scroller :end-continuous))
-		  
+
 		  ;; Single click -- increment value.
-		  (scroller-increment-value scroller (- increment)))	
-		
-	      ;; Report final value, if necessary		   		    
+		  (scroller-increment-value scroller (- increment)))
+
+	      ;; Report final value, if necessary
 	      (unless (eql 0 update-delay)
 		(delete-timer scroller :update-delay)
 		(apply-callback scroller :new-value value))
 
 	      ;; Release grab
 	      (ungrab-pointer display)
-	      
+
 	      ;; Unhighlight arrow
 	      (draw-rectangle
 		(svref regions *elevator-region*) gc
@@ -1073,29 +1059,29 @@
 
 	  (multiple-value-bind (arrow-x arrow-y arrow-width arrow-height)
 	      (scrollbar-more-arrow-geometry scroller)
-	    
+
 	    (using-gcontext
 	      (gc :drawable       scroller
 		  :function       boole-xor
 		  :foreground     highlight-pixel)
-	      
+
 	      ;; Highlight arrow
 	      (draw-rectangle
 		(svref regions *elevator-region*) gc
-		arrow-x arrow-y arrow-width arrow-height :fill-p)      
+		arrow-x arrow-y arrow-width arrow-height :fill-p)
 
 	      ;; Force pointer to stay within arrow window
 	      (grab-pointer scroller #.(make-event-mask :button-press :button-release)
 			    :confine-to (svref regions *more-arrow-region*))
-		    
+
 	      (if (catch :release (not (process-next-event display *scroller-click-timeout*)))
-		  
+
 		  ;; Perform continuous scrolling...
 		  (progn
 		    ;; Set timer for update
 		    (when (and (numberp update-delay) (plusp update-delay))
 		      (add-timer scroller :update-delay update-delay))
-		    
+
 		    ;; Increment until release event
 		    (apply-callback scroller :begin-continuous)
 		    (catch :release
@@ -1103,23 +1089,23 @@
 			(scroller-increment-value scroller increment)
 			(do () ((not (process-next-event display *scroller-hold-timeout*))))))
 		    (apply-callback scroller :end-continuous))
-		  
+
 		  ;; Single click -- increment value.
 		  (scroller-increment-value scroller increment))
-	      
-	      ;; Report final value, if necessary		   		    
+
+	      ;; Report final value, if necessary
 	      (unless (eql 0 update-delay)
 		(delete-timer scroller :update-delay)
 		(apply-callback scroller :new-value value))
 
 	      ;; Release grab
 	      (ungrab-pointer display)
-	      
+
 	      ;; Unhighlight arrow
 	      (draw-rectangle
 		(svref regions *elevator-region*) gc
 		arrow-x arrow-y arrow-width arrow-height :fill-p))))))
-    
+
     (press-max-anchor (scroller)
       (with-slots (display regions foreground maximum value) scroller
 	;; Highlight max anchor
@@ -1127,26 +1113,26 @@
 	  ((max-anchor     (svref regions *max-anchor-region*))
 	   (highlight-size (scrollbar-anchor-width
 			     (getf *scrollbar-dimensions* (contact-scale scroller)))))
-	  
+
 	  ;; This rectangle size is "too big", but we let the server clip it
 	  (using-gcontext (gc :drawable scroller :foreground foreground)
 	    (draw-rectangle
 	      max-anchor gc
 	      0 0 highlight-size highlight-size
 	      :fill-p))
-	  
+
 	  ;; Wait for release event
 	  (catch :release
 	    (loop (process-next-event display)))
-	  
+
 	  ;; Unhighlight max anchor
 	  (clear-area max-anchor)
-	  
+
 	  ;; Go to maximum position
 	  (unless (= value maximum)
 	    (setf (scale-value scroller) maximum)
 	    (apply-callback scroller :new-value maximum)))))
-    
+
     (press-min-anchor (scroller)
       (with-slots (display regions foreground minimum value) scroller
 	;; Highlight min anchor
@@ -1154,21 +1140,21 @@
 	  ((min-anchor     (svref regions *min-anchor-region*))
 	   (highlight-size (scrollbar-anchor-width
 			     (getf *scrollbar-dimensions* (contact-scale scroller)))))
-	  
+
 	  ;; This rectangle size is "too big", but we let the server clip it
 	  (using-gcontext (gc :drawable scroller :foreground foreground)
 	    (draw-rectangle
 	      min-anchor gc
 	      0 0 highlight-size highlight-size
 	      :fill-p))
-	  
+
 	  ;; Wait for release event
 	  (catch :release
 	    (loop (process-next-event display)))
-	  
+
 	  ;; Unhighlight min anchor
 	  (clear-area min-anchor)
-	  
+
 	  ;; Go to minimum position
 	  (unless (= value minimum)
 	    (setf (scale-value scroller) minimum)
@@ -1198,18 +1184,18 @@
 (defun scroller-handle-motion (scroller)
   (declare (special *previous-position* *drag-motion*))
   (when (boundp '*drag-motion*)
-    (with-slots (orientation) (the scroller scroller)   
+    (with-slots (orientation) (the scroller scroller)
       (with-event (state x y)
 	(multiple-value-bind (ptr-x ptr-y)
 	    ;; Is :button-1 still down?
 	    (if (plusp (logand state #.(make-state-mask :button-1)))
-		
+
 		;; Yes, query current pointer position
 		(query-pointer scroller)
-		
+
 		;; No, use final x,y returned for button transition
 		(values x y))
-	  
+
 	  (let* ((new-position (if (eq :vertical orientation) ptr-y ptr-x))
 		 (increment    (scroller-pixel-value scroller (- new-position *previous-position*))))
 	    (unless (zerop increment)
@@ -1222,14 +1208,14 @@
     (apply-callback scroller :new-value value)))
 
 (defun scroller-increment-value (scroller increment)
-  (with-slots (value minimum maximum update-delay) (the scroller scroller)    
+  (with-slots (value minimum maximum update-delay) (the scroller scroller)
     (let*
       ((new-value (+ value increment))
        (adjusted  (min (max  (or (apply-callback scroller :adjust-value new-value)
 				 new-value)
 			     minimum)
 		       maximum)))
-      
+
       (unless (= adjusted value)
 	(setf (scale-value scroller) adjusted)
 	(when (eql 0 update-delay)
@@ -1241,42 +1227,42 @@
     (let*
       ((current-position
 	 (if (eq :vertical orientation) current-y current-x))
-       
+
        (new-pointer-position
 	 (if (plusp pane-increment)
 	     (when (< current-position (setf min-position
 					     (+ (scroller-value-position scroller)
 						(scrollbar-elevator-size  scroller))))
 	       (1+ min-position))
-	     
+
 	     (when (> current-position (setf max-position
 					     (scroller-value-position scroller)))
 	       (1- max-position)))))
-      
-      (when new-pointer-position	
+
+      (when new-pointer-position
 	(if (eq :vertical orientation)
 	    (setf current-y new-pointer-position)
-	    (setf current-x new-pointer-position))	      
+	    (setf current-x new-pointer-position))
 	(warp-pointer scroller current-x current-y))
-      
+
       (values current-x current-y))))
 
 
 (defun scroller-value-position (scroller)
   (with-slots (width height orientation value minimum maximum) (the scroller scroller)
     (let*
-      ((dimensions       (getf *scrollbar-dimensions* (contact-scale scroller))) 
-       (margin           (scrollbar-margin dimensions)) 
+      ((dimensions       (getf *scrollbar-dimensions* (contact-scale scroller)))
+       (margin           (scrollbar-margin dimensions))
        (anchor-height    (scrollbar-anchor-height dimensions))
        (range            (- maximum minimum)))
-      
+
       (+ anchor-height
 	 margin
-	 (if (zerop range) 0	     
+	 (if (zerop range) 0
 	     (pixel-round
 	       (* (- value minimum)
-		  
-		  ;; Pixels per value unit 
+
+		  ;; Pixels per value unit
 		  (/ (- (if (eq orientation :vertical) height width)
 			anchor-height margin
 			(* (scrollbar-anchor-width dimensions)
@@ -1289,8 +1275,8 @@
 (defun scroller-pixel-value (scroller pixels)
   (with-slots (width height orientation minimum maximum increment) (the scroller scroller)
     (let*
-      ((dimensions       (getf *scrollbar-dimensions* (contact-scale scroller))) 
-       (margin           (scrollbar-margin dimensions)) 
+      ((dimensions       (getf *scrollbar-dimensions* (contact-scale scroller)))
+       (margin           (scrollbar-margin dimensions))
        (anchor-height    (scrollbar-anchor-height dimensions)))
 
       ;; pixels times value-units-per-pixel, rounded to nearest multiple of increment
@@ -1308,41 +1294,41 @@
 
 (defun scroller-indicator-position (scroller &optional size)
   (setf size (or size (scroller-indicator-size scroller)))
-  
+
   (with-slots (width height orientation value minimum maximum) (the scroller scroller)
     (let*
-      ((dimensions       (getf *scrollbar-dimensions* (contact-scale scroller))) 
-       (margin           (scrollbar-margin dimensions)) 
+      ((dimensions       (getf *scrollbar-dimensions* (contact-scale scroller)))
+       (margin           (scrollbar-margin dimensions))
        (anchor-height    (scrollbar-anchor-height dimensions))
        (range            (- maximum minimum)))
-      
+
       (+ anchor-height
 	 margin
-	 (if (zerop range) 0	     
+	 (if (zerop range) 0
 	     (pixel-round
 	       (* (- value minimum)
-		  
+
 		  ;; Pixels per value unit for indicator position
 		  (/ (- (if (eq orientation :vertical) height width)
 			anchor-height margin
-			size		    
+			size
 			margin anchor-height)
 		     range))))))))
 
 (defun scroller-indicator-size (scroller)
   (with-slots (width height orientation minimum maximum indicator-size) (the scroller scroller)
     (let*
-      ((dimensions       (getf *scrollbar-dimensions* (contact-scale scroller))) 
-       (margin           (scrollbar-margin dimensions)) 
+      ((dimensions       (getf *scrollbar-dimensions* (contact-scale scroller)))
+       (margin           (scrollbar-margin dimensions))
        (anchor-height    (scrollbar-anchor-height dimensions))
        (range            (- maximum minimum)))
-      
+
       (pixel-round
 	(*
-	  (min (true-indicator-size indicator-size) range)     ; "clip" displayed size to cable range 
-	  (if (zerop range) 0	     
+	  (min (true-indicator-size indicator-size) range)     ; "clip" displayed size to cable range
+	  (if (zerop range) 0
 	      ;; Pixels per value unit for indicator size
 	      (/ (- (if (eq orientation :vertical) height width)
-		    anchor-height margin		    
+		    anchor-height margin
 		    margin anchor-height)
 		 range)))))))

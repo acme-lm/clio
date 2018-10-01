@@ -1,33 +1,22 @@
 ;;; -*- Mode:Lisp; Package:CLIO-OPEN; Base:10; Lowercase:T; Syntax:Common-Lisp -*-
 
 
-;;;----------------------------------------------------------------------------------+
-;;;                                                                                  |
-;;;                          TEXAS INSTRUMENTS INCORPORATED                          |
-;;;                                  P.O. BOX 149149                                 |
-;;;                                AUSTIN, TEXAS 78714                               |
-;;;                                                                                  |
-;;;             Copyright (C) 1989, 1990 Texas Instruments Incorporated.             |
-;;;                                                                                  |
-;;; Permission is granted to any individual or institution to use, copy, modify, and |
-;;; distribute this software, provided that  this complete copyright and  permission |
-;;; notice is maintained, intact, in all copies and supporting documentation.        |
-;;;                                                                                  |
-;;; Texas Instruments Incorporated provides this software "as is" without express or |
-;;; implied warranty.                                                                |
-;;;                                                                                  |
-;;;----------------------------------------------------------------------------------+
+;;;                          TEXAS INSTRUMENTS INCORPORATED
+;;;                                  P.O. BOX 149149
+;;;                                AUSTIN, TEXAS 78714
+;;;
+;;;             Copyright (C) 1989, 1990 Texas Instruments Incorporated.
+;;;
+;;; Permission is granted to any individual or institution to use, copy, modify, and
+;;; distribute this software, provided that  this complete copyright and  permission
+;;; notice is maintained, intact, in all copies and supporting documentation.
+;;;
+;;; Texas Instruments Incorporated provides this software "as is" without express or
+;;; implied warranty.
+
 
 
 (in-package "CLIO-OPEN")
-
-(export '(make-property-sheet
-	  property-sheet
-	  property-sheet-area
- 
-	  dialog-accept
-	  dialog-cancel
-	  ))
 
 
 ;;;----------------------------------------------------------------------------+
@@ -45,9 +34,9 @@
 		    :initform nil)
    (control-default :type (or null contact)
 		    :initform nil))
-  
-  (:resources                                                            
-    (border-width  :initform 1) 
+
+  (:resources
+    (border-width  :initform 1)
     (property-area :type (or function list) :initform nil)
     (default-control :type (member :accept :cancel) :initform :accept)
     )
@@ -85,25 +74,25 @@
     new-value))
 
 (defmethod dialog-accept ((self property-sheet))
-  "Invokes :accept callback function and pops down the dialog" 
+  "Invokes :accept callback function and pops down the dialog"
   (if (callback-p self :accept)
       (apply-callback self :accept)
       (with-slots ((members children)) (property-sheet-area self)
 	(dolist (member members)
 	  (apply-callback member :accept))))
   (with-slots (pinned-p) self
-    (unless pinned-p (setf (contact-state self) :withdrawn)))) 
+    (unless pinned-p (setf (contact-state self) :withdrawn))))
 
 
 (defmethod dialog-cancel ((self property-sheet))
   "Invokes :cancel callback function and pops down the dialog."
   (with-slots (pinned-p) self
-    (unless pinned-p (setf (contact-state self) :withdrawn))) 
+    (unless pinned-p (setf (contact-state self) :withdrawn)))
   (if (callback-p self :cancel)
       (apply-callback self :cancel)
       (with-slots ((members children)) (property-sheet-area self)
 	(dolist (member members)
-	  (apply-callback member :cancel))))) 
+	  (apply-callback member :cancel)))))
 
 (defmethod shell-mapped ((self property-sheet))
   "Invokes :initialize callback function."
@@ -122,7 +111,7 @@
     (with-slots (previous-pointer-x previous-pointer-y control-default display) self
       (cond ((realized-p self)
       ;; Store position for pointer unwarping later....
-	     (multiple-value-setq		
+	     (multiple-value-setq
 	       (previous-pointer-x previous-pointer-y) (pointer-position self))
 	     (warp-pointer
 	       control-default
@@ -165,7 +154,6 @@
 
 (defun make-property-sheet (&rest initargs &key default-control &allow-other-keys)
   "Creates and returns a property-sheet instance."
-  (declare (values property-sheet))
   (when default-control
     (assert (symbolp default-control) nil "~s is not a symbol name."))
   (apply #'make-contact 'property-sheet initargs))
@@ -177,47 +165,45 @@
       (etypecase property-area
 	(null
 	 (let ((space (ab-height (getf *button-dimensions-by-scale* (contact-scale self)))))
-	   (values 'make-table 
-		   `(
-		     :columns              2
-		     :column-alignment     :right
+	   (values 'make-table
+		   `(:columns 2
+		     :column-alignment :right
 		     :same-width-in-column :on
-		     :same-height-in-row   :on
-		     :horizontal-space     ,space
-		     :vertical-space       ,space))))
-
+		     :same-height-in-row :on
+		     :horizontal-space ,space
+		     :vertical-space ,space))))
 	(function property-area)
-
 	(list (values (first property-area) (rest property-area))))
-    
     (with-slots (width height) self
-
       ;; Create the manager
-      (let ((manager (make-contact 'property-sheet-manager
+      (let* ((manager (make-contact 'property-sheet-manager
 				   :name :manager
 				   :parent self
 				   :x 0 :y 0
 				   :width width :height height
-				   :border-width 0)))
-	
+				   :border-width 0))
+	    (area-constructor-result
 	;; Create the property area
-	(assert (typep (apply area-constructor
+		 (apply area-constructor
 			      :name :area
 			      :parent manager
 			      :x 0 :y 0
 			      :width width :height height
 			      :border-width 0
-			      area-initargs)
-		       'composite) nil
-		"Property area is not a composite." )
-	
+			      area-initargs)))
+	;; --EED: investigate why the following could not operate
+	;;        directly on the apply area-constructor results
+	(assert (typep
+		 area-constructor-result
+		 'composite) nil
+		 "Property area is not a composite." )
 	(labels
 	  ((verify      (property-sheet)
 			(multiple-value-bind (verified-p message field)
 			    (or (not (callback-p property-sheet :verify))
 				(apply-callback property-sheet :verify))
 			  (if verified-p
-			      (dialog-accept property-sheet)	
+			      (dialog-accept property-sheet)
 			      (dialog-warn property-sheet message field))))
 	   (menu-accept (property-sheet)
 			(verify property-sheet)
@@ -225,30 +211,22 @@
 	   (menu-cancel (property-sheet)
 			(dialog-cancel property-sheet)
 			(throw :menu nil)))
-	  
 	  ;; Create buttons for command area
 	  (add-callback (make-action-button :parent manager :name :accept :label "Apply")
 			  :release #'verify self)
 	  (add-callback (make-action-button :parent manager :name :cancel :label "Reset")
 			:release #'dialog-cancel self)
-
-
 	  ;; Create footer area - display-text-field
 	  (make-display-text-field :parent manager :name :footer :alignment :left
 				   :display-gravity :west)
-	  
 	  ;; Create settings menu
 	  (let ((choice (menu-choice (make-menu :parent self :title "Settings"))))
 	    (add-callback (make-action-item :parent choice :name :accept :label "Apply")
 			  :release #'menu-accept self)
 	    (add-callback (make-action-item :parent choice :name :cancel :label "Reset")
 			  :release #'menu-cancel self))
-	  
 	  ;; Set default control
 	  (setf (dialog-default-control self) default-control))))))
-
-  
-
 
 
 ;;;----------------------------------------------------------------------------+
@@ -265,27 +243,27 @@
   (:documentation "The geometry manager for property sheet component areas."))
 
 
- 
+
 (defmethod change-layout ((self property-sheet-manager) &optional newly-managed)
   (declare (ignore newly-managed))
   (with-slots (width height parent) self
-    
+
     ;; Ensure big enough for property area if possible.
     (multiple-value-bind (pw ph) (preferred-size self)
-      
+
       ;; Let window mgr know new preferred minimum height.
       (with-wm-properties (parent)
 	(setf (wm-min-width  parent) pw
 	      (wm-min-height parent) ph))
-		  
+
       (let ((rw (when (< width pw) pw))
 	    (rh (when (< height ph) ph)))
-	
+
 	(when
 	  (or
 	    ;; Don't need to request larger size?
 	    (not (or rw rh))
-	    
+
 	    ;; Request for larger size rejected?
 	    (multiple-value-bind (approved-p nx ny nw nh)
 		(change-geometry self :width rw :height rh :accept-p t)
@@ -303,39 +281,39 @@
 			(contact-screen psm)
 			(getf *dialog-point-spacing*
 			      (contact-scale (contact-parent psm)))))
-       
+
        (accept-button (find :accept children :key #'contact-name))
        (abw           (contact-border-width accept-button))
        (awidth        (+ abw abw (contact-width accept-button)))
        (aheight       (+ abw abw (contact-height accept-button)))
-       
+
        (cancel-button (find :cancel children :key #'contact-name))
        (cbw           (contact-border-width cancel-button))
        (cwidth        (+ cbw cbw (contact-width cancel-button)))
        (cheight       (+ cbw cbw (contact-height cancel-button)))
-       
+
        (property-area (find :area children :key #'contact-name))
-       
+
        (footer        (find :footer children :key #'contact-name))
        (footer-height (contact-height footer))
        (button-y      (- height (+ (max aheight cheight) space  footer-height 1)))
        (button-x      (pixel-round (- width (+ awidth cwidth space 1)) 2)))
-      
+
       ;; Adjust footer geometry.
       (resize footer width footer-height (contact-border-width footer))
       (move footer 0 (- height footer-height))
-      
+
       ;; Adjust button geometry.  Make their top edges align.
       (move accept-button button-x button-y)
       (move cancel-button (+ button-x (+ awidth space)) button-y)
-      
+
       ;; Adjust property-area geometry: preferred size if possible, but
       ;; no more than available space.
       (multiple-value-bind (pw ph) (preferred-size property-area :width 0 :height 0)
 	(let ((paw (min (max 1 (- width space space)) pw))
 	      (pah (min (max 1 (- height space space)) ph)))
 	  (resize property-area paw pah 0)
-	  
+
 	  ;;Center property-area within available space.
 	  (move property-area
 		(max space (pixel-round (- width paw) 2))
@@ -367,8 +345,8 @@
 
 (defmethod manage-geometry ((self property-sheet-manager) child x y width height border-width &key)
   (let (success-p)
-    (if (or 
-	  
+    (if (or
+
 	  (and width  (> width  (contact-width child)))
 	  (and height (> height (contact-height child)))
 	  )
@@ -388,7 +366,7 @@
 				    (t (change-layout self))))))
 	;; else...
 	(setf success-p t))
-    
+
     (values success-p
 	    (or x (contact-x child))
 	    (or y (contact-y child))
@@ -419,7 +397,7 @@
 	    (preferred-size (second buttons))
 	  (setf accumulated-width (+ pwidth1 pbw1 pbw1 hspace pwidth2 pbw2 pbw2)
 		highest (max (+ pheight1 pbw1 pbw1) (+ pheight2 pbw2 pbw2)))))
-      
+
       ;;We can ignore the preferred border-width because property-sheet-manager
       ;;geometry management forces a zero-width border.
       (multiple-value-bind (pwidth pheight)
@@ -463,15 +441,12 @@
 (defun property-sheet-display-menu (property-sheet)
   (let ((menu    (first (composite-shells property-sheet)))
 	(display (contact-display property-sheet)))
-    
+
     ;; Pop up settings menu
     (present-dialog menu :button :button-3 :state (with-event (state) state))
-    
+
     (catch :menu
       (loop (process-next-event display)))
-    
+
     ;; Pop down settings menu
     (setf (contact-state menu) :withdrawn)))
-
-
-

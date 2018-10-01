@@ -1,53 +1,42 @@
 ;; -*- Mode:Lisp; Package:CLIO-OPEN; Base:10; Lowercase:T; Syntax:Common-Lisp -*-
 
 
-;;;----------------------------------------------------------------------------------+
-;;;                                                                                  |
-;;;                          TEXAS INSTRUMENTS INCORPORATED                          |
-;;;                                  P.O. BOX 149149                                 |
-;;;                                AUSTIN, TEXAS 78714                               |
-;;;                                                                                  |
-;;;             Copyright (C) 1989, 1990 Texas Instruments Incorporated.             |
-;;;                                                                                  |
-;;; Permission is granted to any individual or institution to use, copy, modify, and |
-;;; distribute this software, provided that  this complete copyright and  permission |
-;;; notice is maintained, intact, in all copies and supporting documentation.        |
-;;;                                                                                  |
-;;; Texas Instruments Incorporated provides this software "as is" without express or |
-;;; implied warranty.                                                                |
-;;;                                                                                  |
-;;;----------------------------------------------------------------------------------+
+;;; Texas Instruments Incorporated
+;;; PO Box 149149
+;;; Austin, Texas 78714
 ;;;
+;;; Copyright (c) 1989, 1990 Texas Instruments Incorporated.
+;;;
+;;; Permission is granted to any individual or institution to use,
+;;; copy, modify, and distribute this software, provided that this
+;;; complete copyright and permission notice is maintained, intact, in
+;;; all copies and supporting documentation.
+;;;
+;;; texas instruments incorporated provides this software "as is"
+;;; without express or implied warranty.
+
+
 ;;;  Implementation Strategy:
 ;;;
-;;;  
-;;;  A confirm is invoked by a originating contact (near). A triangular shadow originating 
+;;;
+;;;  A confirm is invoked by a originating contact (near). A triangular shadow originating
 ;;;  from the "near" contact is drawn into the root with a given quadrant gravity, which
 ;;;  is dependent on the position of the originating contact. After a response is given
 ;;;  to confirm the area overshadowed by the confirm's shadow is refreshed over two rectangular
 ;;;  areas covering the overshadowed area. The sensitivity of the originating contact is turned
 ;;;  off when a confirm is invoked and turned back on when confirm receives a response.
-;;;  
+;;;
 
 
 (in-package "CLIO-OPEN")
 
-(export '(
-	  confirm
-	  confirm-accept-label
-	  confirm-accept-only
-	  confirm-cancel-label
-	  confirm-message
-	  confirm-near
-	  confirm-p
-	  make-confirm
-	  ))
 
-;; OL GUI spec for the apex of the confirm, scale-dependent distance from the originating contact)
-(defconstant  *confirm-apex-dimensions* (list :small 36 :medium 42 :large 50 :extra-large 64))
+;; OL GUI spec for the apex of the confirm, scale-dependent distance
+;; from the originating contact)
+(defparameter  *confirm-apex-dimensions* (list :small 36 :medium 42 :large 50 :extra-large 64))
 
-(defconstant  *confirm-shadow-images*
-	      (list 
+(defparameter  *confirm-shadow-images*
+	      (list
 		:north-west (list :upper 12%gray :lower 25%gray)
 		:north-east (list :upper 12%gray :lower 25%gray)
 		:south-west (list :upper 25%gray :lower 50%gray)
@@ -56,7 +45,7 @@
 
 
 ;; Confirm scale is one scale larger than near's scale
-(defconstant *scales* '(:small :medium :large :extra-large :extra-large))
+(defparameter *scales* '(:small :medium :large :extra-large :extra-large))
 
 ;;;----------------------------------------------------------------------------+
 ;;;    Utility  Functions                                                      +
@@ -111,7 +100,7 @@
 		 :type     string
 		 :accessor confirm-cancel-label
 		 :initarg  :cancel-label)
-   
+
    ;; Internal slots
    (points       :type           (vector window) ;; storage x-near y-near & shadow regions
 	 	 :initform       (make-array 6))
@@ -128,7 +117,7 @@
     (default-control :initform :accept :type (member :accept :cancel))
     (accept-label    :type string :initform "OK")
     cancel-label
-    (border-width    :initform 1) 
+    (border-width    :initform 1)
     (accept-only     :type (member :on :off) :initform :off)
     (message         :initform "Press a button to continue."))
   (:documentation "A dialog which presents a simple message."))
@@ -144,7 +133,6 @@
 
 (defun make-confirm (&rest initargs)
   "Creates and returns a confirm instance."
-  (declare (values confirm)) 
   (apply #'make-contact 'confirm initargs))
 
 
@@ -230,7 +218,7 @@
 ;;;                                                                            |
 ;;;----------------------------------------------------------------------------+
 
-(defmethod initialize-instance :after ((self confirm) &key message accept-only accept-label 
+(defmethod initialize-instance :after ((self confirm) &key message accept-only accept-label
 					(default-control :accept) &allow-other-keys)
   (with-slots (x y width height near foreground scale)  self
     (unless near (setq near self))
@@ -256,11 +244,11 @@
       ;; Create buttons for command area
       (add-callback (make-action-button :parent sheet :name :accept :label accept-label)
 		    :release 'dialog-accept self)
-      
+
       ;; Initialize cancel control if necessary
       (setf (confirm-accept-only self) accept-only)
-            
-      
+
+
       (setf (dialog-default-control self) default-control))))
 
 
@@ -269,7 +257,7 @@
 ;;; Dialog                                                                     +
 ;;;                                                                            +
 ;;;----------------------------------------------------------------------------+
-	
+
 
 (defmethod dialog-accept ((self confirm))
   "Invokes :accept callback function and pops down the dialogue"
@@ -296,7 +284,7 @@
 ;; where the Confirm action button was selected otherwise warp pointer to Near after
 ;; selecting a Confirm action button.
 
-;; Track the state of pointer position w.r.t Confirm by storing state in internal slot 
+;; Track the state of pointer position w.r.t Confirm by storing state in internal slot
 ;; of Confirm (ie. Did it stay on the Confirm the whole time or did it move off the Confirm?).
 
 
@@ -313,7 +301,7 @@
       (:south-east
        (setf (svref points 2) (+ right-edge 2)
 	     (svref points 3) (+ 2 bottom-edge) (svref points 4) (+ right-edge 2) (svref points 5) y))))
-   
+
    (calculate-lower-shadow-vertices (points x y gravity right-edge bottom-edge)
     "Determine the two sets of points for drawing the lower triangular shadow"
 	 (case gravity
@@ -328,7 +316,7 @@
 	   (:south-east
 	    (setf (svref points 2) x
 		  (svref points 3) (+ 2 bottom-edge) (svref points 4) (+ 2 right-edge) (svref points 5) (+ 2  bottom-edge)))))
-   
+
    (draw-confirm-triangular-shadows (confirm root x y width height points gravity)
     "Draw two triangular shadows originating from NEAR given the calculated vertices"
       (proclaim '(inline calculate-shadows-vertices ))
@@ -346,14 +334,14 @@
 		    :fill-style :opaque-stippled
 		    :stipple    (contact-image-mask root upper-image :depth 1)
 		    :subwindow-mode :include-inferiors
-		    )	  
+		    )
 	  (draw-lines root gcontext points :fill-p t :shape :complex)
 	  (calculate-lower-shadow-vertices points x y gravity right-edge bottom-edge)
 	  (with-gcontext (gcontext :stipple (contact-image-mask root lower-image :depth 1))
 	    (draw-lines root gcontext points :fill-p t :shape :complex))))))
-  
+
   (defmethod shell-mapped ((self confirm))
-    "Recomputes x and y given NEAR and invokes :initialize callback function."    
+    "Recomputes x and y given NEAR and invokes :initialize callback function."
     (with-slots (near height width points previous-pointer-x previous-pointer-y control-default) self
       (unless (eq self near)
 	(multiple-value-bind (x-near y-near)
@@ -383,36 +371,36 @@
 		  (:south-east
 		   (values (- x-near apex width)
 			   (- y-near apex height))))
-	      
+
 	      ;; If CONFIRM will be clipped, compensate
 	      ;; and adjust x and y of CONFIRM
 	      (let ((adjusted-x (min (max x 0) (- root-width width)))
 		    (adjusted-y (min (max y 0) (- root-height height))))
 		(change-geometry self
-				 :x adjusted-x 
-				 :y adjusted-y 
+				 :x adjusted-x
+				 :y adjusted-y
 				 )
 		;; Turn near's sensitivity off
 		(setf (contact-sensitive near) :off))))))
-      
+
       (apply-callback self :map)
       (apply-callback self :initialize)
 
       ;; Store position for pointer unwarping later....
       (multiple-value-setq
 	(previous-pointer-x previous-pointer-y) (pointer-position self))
-      
+
       (warp-pointer
 	control-default
 	(pixel-round (contact-width control-default)  2)
 	(- (contact-height control-default) 2))))
-  
+
 
   (defmethod display ((manager confirm-sheet)
 		      &optional exposed-x exposed-y exposed-width exposed-height &key)
     (declare (ignore exposed-x exposed-y exposed-height exposed-width))
     (proclaim '(inline draw-confirm-triangular-shadows))
-    
+
     (with-slots (width height x y points) (contact-parent manager)
       (let ((root (contact-root manager)))
 	(draw-confirm-triangular-shadows
@@ -463,10 +451,10 @@
 	       x         bottom-edge width apex)
 	     )
 	    (:south-east
-	     (values 
+	     (values
 	       x           bottom-edge width apex
 	       right-edge	 y           apex  (+ height apex)))))))
-   
+
    (reexpose-overshadowed-area (confirm root near)
     "Refresh the root area that confirm overshadowed"
       (proclaim '(inline calculate-reexposed-areas))
@@ -484,7 +472,7 @@
       (unless (eq self near)
 	;; Erase shadow.
 	(reexpose-overshadowed-area self (contact-root self) near)
-	
+
 	;; Unwarp pointer to original position, if necessary.
 	(when previous-pointer-x
 	  (warp-pointer self previous-pointer-x previous-pointer-y))))))
@@ -495,10 +483,10 @@
 ;;;  Geometry Management                                                       +
 ;;;                                                                            +
 ;;;----------------------------------------------------------------------------+
- 
+
 (defmethod change-layout ((self confirm-sheet) &optional newly-managed)
   ;;The idea here is to make the accept and cancel buttons be separated by the
-  ;;standard horizontal spacing, and then centered within the sheet.  The standard 
+  ;;standard horizontal spacing, and then centered within the sheet.  The standard
   ;;vertical spacing will be enforced between the bottom edge of the taller button
   ;;and the edge of the message.
   ;;Force the message area to be the smaller of its preferred size or the space remaining
@@ -513,9 +501,9 @@
 	   (aheight (+ abw abw (contact-height accept-button)))
 	   (screen (contact-screen self))
 	   (pixel (getf *dialog-point-spacing* (contact-scale self)))
-	   (hspace (point-pixels screen pixel :horizontal))	
+	   (hspace (point-pixels screen pixel :horizontal))
 	   (vspace (point-pixels screen pixel :vertical))
-	   rbw rwidth rheight button-x button-y) 
+	   rbw rwidth rheight button-x button-y)
 
       ;;Figure out where buttons should go.  Make their top edges align.
       (if (eq (confirm-accept-only (contact-parent self)) :on)
@@ -524,11 +512,11 @@
 		  button-x (floor (- width awidth) 2))
 	    (move accept-button  button-x button-y)
 	    )
-	  (progn 
+	  (progn
 	    (setf rbw (contact-border-width cancel-button)
 		  rwidth (+ rbw rbw (contact-width cancel-button))
 		  rheight (+ rbw rbw (contact-height cancel-button))
-		  button-y (- height (+ (max aheight rheight) vspace 3))       
+		  button-y (- height (+ (max aheight rheight) vspace 3))
 		  button-x (floor (- width (+ awidth rwidth hspace 3)) 2))
 	    (with-state (accept-button)
 	      (move accept-button  button-x  button-y)
@@ -545,7 +533,7 @@
 	      (preferred-size self)
 	    (change-geometry self :width p-width :height p-height :accept-p t))
 	  ;; else...
-	  
+
 	  ;;Make message-area fit within space remaining
 	  (with-state (message-area)
 	    (let ((new-width  (max 1
@@ -571,11 +559,11 @@
   (declare (ignore width height border-width))
   (change-layout self))
 
-(defmethod manage-geometry ((self confirm-sheet) child x y width height border-width &key) 
+(defmethod manage-geometry ((self confirm-sheet) child x y width height border-width &key)
   (let (success-p)
     (multiple-value-bind (p-w p-h p-b-w)
 	(preferred-size self)
-      (if  (or 
+      (if  (or
 	     (/= p-w  (contact-width self))
 	     (/= p-h  (contact-height self))
 	     (and width  (/= width  (contact-width child)))
@@ -595,7 +583,7 @@
 	    (or width (contact-width child))
 	    (or height (contact-height child))
 	    (or border-width (contact-border-width child)))))
-      
+
 
 
 (defmethod preferred-size ((self confirm-sheet) &key width height border-width)
@@ -623,21 +611,21 @@
 	      (preferred-size cancel-button)
 	    (setf accumulated-width (+ accumulated-width hspace pwidth2 pbw2 pbw2)
 		  highest (max highest (+ pheight2 pbw2 pbw2))))))
-      
+
       ;;We can ignore the preferred border-width because confirm-sheet
       ;;geometry management forces a zero-width border.
       (multiple-value-bind (pwidth pheight)
 	  ;; Use width/height 0 to request minimum text extent size.
-	  (preferred-size message-area :width 0 :height 0) 
+	  (preferred-size message-area :width 0 :height 0)
 	(values (+ (max pwidth accumulated-width) hspace hspace 6)
 		(+ pheight highest vspace vspace vspace 6)
-		0))))) 
+		0)))))
 
 
 ;;;----------------------------------------------------------------------------+
 ;;;                                                                            +
 ;;;   WITH-CONFIRM     Using cached confirms                                   +
-;;;                                                                            +                        
+;;;                                                                            +
 ;;;----------------------------------------------------------------------------+
 
 
@@ -650,7 +638,7 @@
   "Bind a confirm to the given initargs either by allocating one from
    the confirm cache if one exists or instantiate one"
   (assert near () "A :near initarg was not provided for CONFIRM-P")
-  (let* ((near-scale (contact-scale near))	 
+  (let* ((near-scale (contact-scale near))
 	 (top-level  (contact-top-level near))
 	 (background (getf initargs :background))
 	 (confirm    (pop (top-level-confirms top-level)))
@@ -662,20 +650,20 @@
 	      (contact-current-background-pixel top-level)))
 
     (if confirm
-	(let ((foreground      (getf initargs :foreground))	    
+	(let ((foreground      (getf initargs :foreground))
 	      (accept-label    (getf initargs :accept-label))
 	      (cancel-label    (getf initargs :cancel-label))
 	      (accept-only     (getf initargs :accept-only))
 	      (message         (getf initargs :message))
 	      (near            (getf initargs :near))
 	      (default-control (getf initargs :default-control)))
-	  
+
 	  (setf (contact-background confirm) background)
-	  
+
 	  (setf (contact-foreground confirm)
 		(convert near
 			 (or foreground :black)
-			 '(or (member :none :parent-relative) pixel pixmap)))	  
+			 '(or (member :none :parent-relative) pixel pixmap)))
 	  (setf (confirm-accept-label confirm)
 		(if accept-label
 		    (convert near accept-label 'string)
@@ -708,9 +696,9 @@
 		:scale near-scale
 		:callbacks `((:accept (,#'(lambda () (throw :exit-confirm t))))
 			     (:cancel (,#'(lambda () (throw :exit-confirm nil)))))
-		initargs))) 
+		initargs)))
 
-    
+
     (setf (contact-state confirm) :mapped)
     (unwind-protect
 	(catch :exit-confirm

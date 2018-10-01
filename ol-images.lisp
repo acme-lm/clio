@@ -1,56 +1,50 @@
 ;; -*- Mode:Lisp; Package:CLIO-OPEN; Base:10; Lowercase:T; Fonts:(CPTFONT); Syntax:Common-Lisp -*-
 
 
-;;;----------------------------------------------------------------------------------+
-;;;                                                                                  |
-;;;                          TEXAS INSTRUMENTS INCORPORATED                          |
-;;;                                  P.O. BOX 149149                                 |
-;;;                                AUSTIN, TEXAS 78714                               |
-;;;                                                                                  |
-;;;             Copyright (C) 1989, 1990 Texas Instruments Incorporated.             |
-;;;                                                                                  |
-;;; Permission is granted to any individual or institution to use, copy, modify, and |
-;;; distribute this software, provided that  this complete copyright and  permission |
-;;; notice is maintained, intact, in all copies and supporting documentation.        |
-;;;                                                                                  |
-;;; Texas Instruments Incorporated provides this software "as is" without express or |
-;;; implied warranty.                                                                |
-;;;                                                                                  |
-;;;----------------------------------------------------------------------------------+
+;;; Texas Instruments Incorporated
+;;; PO Box 149149
+;;; Austin, Texas 78714
+;;;
+;;; Copyright (c) 1989, 1990 Texas Instruments Incorporated.
+;;;
+;;; Permission is granted to any individual or institution to use,
+;;; copy, modify, and distribute this software, provided that this
+;;; complete copyright and permission notice is maintained, intact, in
+;;; all copies and supporting documentation.
+;;;
+;;; texas instruments incorporated provides this software "as is"
+;;; without express or implied warranty.
 
-(in-package "CLIO-OPEN")
+(in-package :clio-open)
 
-;;;----------------------------------------------------------------------------+
-;;;                                                                            |
-;;;                         Scroll Bar Geometry                                |
-;;;                                                                            |
-;;;----------------------------------------------------------------------------+
 
-(defconstant
+;;; Scroll Bar Geometry
+
+(defparameter
   *scrollbar-dimensions*
   (list
     :small       (make-scrollbar
-		   :anchor-height 5 
-		   :anchor-width 13 
-		   :arrow-height 4    
+		   :anchor-height 5
+		   :anchor-width 13
+		   :arrow-height 4
 		   :arrow-width 6
 		   :cable-margin 1
 		   :cable-width 3
 		   :margin 2
 		   )
     :medium      (make-scrollbar
-		   :anchor-height 6 
-		   :anchor-width 15 
-		   :arrow-height 5    
+		   :anchor-height 6
+		   :anchor-width 15
+		   :arrow-height 5
 		   :arrow-width 8
-		   :cable-margin 1 
-		   :cable-width 3 
-		   :margin 2 
+		   :cable-margin 1
+		   :cable-width 3
+		   :margin 2
 		   )
     :large       (make-scrollbar
-		   :anchor-height 7 
-		   :anchor-width 17 
-		   :arrow-height 6    
+		   :anchor-height 7
+		   :anchor-width 17
+		   :arrow-height 6
 		   :arrow-width 10
 		   :cable-margin 1
 		   :cable-width 3
@@ -59,7 +53,7 @@
     :extra-large (make-scrollbar
 		   :anchor-height 9
 		   :anchor-width 21
-		   :arrow-height 8   
+		   :arrow-height 8
 		   :arrow-width 14
 		   :cable-margin 2
 		   :cable-width 5
@@ -214,7 +208,7 @@
   '#*10000000000000011
   '#*10000000000000011
   '#*01111111111111111
-  '#*01111111111111100  
+  '#*01111111111111100
   )
 
 (defimage extra-large-vertical-elevator
@@ -282,7 +276,7 @@
   '#*100000000000000000011
   '#*100000000000000000011
   '#*111111111111111111111
-  '#*011111111111111111100	  
+  '#*011111111111111111100
   )
 
 
@@ -382,26 +376,26 @@
     ))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; text images
 
 (defparameter
   *text-caret-dimensions*
   (list
-    :small        (make-text-caret 
+    :small        (make-text-caret
 		    :height    5
 		    :width     5
 		    :baseline-offset  2)
-    :medium       (make-text-caret 
+    :medium       (make-text-caret
 		    :height    6
 		    :width     5
 		    :inactive-height  7
 		    :baseline-offset  2)
-    :large        (make-text-caret 
+    :large        (make-text-caret
 		    :height    7
 		    :width     7
 		    :baseline-offset  2)
-    :extra-large  (make-text-caret 
+    :extra-large  (make-text-caret
 		    :height    9
 		    :width     9
 		    :baseline-offset  3)))
@@ -490,8 +484,8 @@
 		    :large        large-inactive-text-caret
 		    :extra-large  extra-large-inactive-text-caret)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; scrolling text button images
+
+;;; scrolling text button images
 
 (defimage small-text-scroll-left-arrow
    '#*0111111111100
@@ -554,7 +548,7 @@
    '#*0011111111110)
 
 
-(defimage medium-text-scroll-left-arrow 
+(defimage medium-text-scroll-left-arrow
    '#*011111111111100
    '#*100000000000010
    '#*100000000000011
@@ -623,7 +617,7 @@
    '#*001111111111110)
 
 
-(defimage large-text-scroll-left-arrow 
+(defimage large-text-scroll-left-arrow
    '#*01111111111111100
    '#*10000000000000010
    '#*10000000000000011
@@ -702,7 +696,7 @@
    '#*00111111111111110)
 
 
-(defimage extra-large-text-scroll-left-arrow 
+(defimage extra-large-text-scroll-left-arrow
    '#*0111111111111111111111100
    '#*1000000000000000000000010
    '#*1000000000000000000000011
@@ -810,7 +804,7 @@
    '#*0111111111111111111111111
    '#*0011111111111111111111110)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; scrolling numeric button images
 
 (defimage small-numeric-scroll-button
@@ -1048,15 +1042,9 @@
    '#*001111111111111111111111111111111111111111111110)
 
 
-
-;;;----------------------------------------------------------------------------+
-;;;                                                                            |
 ;;;                         Slider Geometry                                    |
-;;;                                                                            |
-;;;----------------------------------------------------------------------------+
 
-
-(defconstant
+(defparameter
   *slider-dimensions*
   (list
     :small       (make-slidebar	;;10pt
@@ -1102,14 +1090,14 @@
 ;; width = 2 times (floor (slider-drag-box-width slider) 2) ;; offset to center of tick mark
 ;; width = height to make symmetrical for use in either orientation
 
-(defimage small-bar-mask 	;;  HxW= 4x4 
+(defimage small-bar-mask 	;;  HxW= 4x4
   '#*0110
   '#*1111
   '#*1111
   '#*0110
   )
 
-(defimage medium-bar-mask 	;;  HxW= 5x5 
+(defimage medium-bar-mask 	;;  HxW= 5x5
   '#*01110
   '#*11111
   '#*11111
@@ -1118,7 +1106,7 @@
   )
 
 
-(defimage large-bar-mask 	;;  HxW= 6x6 
+(defimage large-bar-mask 	;;  HxW= 6x6
   '#*011110
   '#*111111
   '#*111111
@@ -1127,7 +1115,7 @@
   '#*011110
   )
 
-(defimage extra-large-bar-mask ;;  HxW= 6x6 
+(defimage extra-large-bar-mask ;;  HxW= 6x6
   '#*00111100
   '#*01111110
   '#*11111111
@@ -1138,14 +1126,14 @@
   '#*00111100
   )
 
-(defimage small-bar-border 	;;  HxW= 4x4 
+(defimage small-bar-border 	;;  HxW= 4x4
   '#*0110
   '#*1001
   '#*1001
   '#*0110
   )
 
-(defimage medium-bar-border 	;;  HxW= 5x5 
+(defimage medium-bar-border 	;;  HxW= 5x5
   '#*01110
   '#*10001
   '#*10001
@@ -1154,7 +1142,7 @@
   )
 
 
-(defimage large-bar-border 	;;  HxW= 6x6 
+(defimage large-bar-border 	;;  HxW= 6x6
   '#*011110
   '#*100001
   '#*100001
@@ -1163,7 +1151,7 @@
   '#*011110
   )
 
-(defimage extra-large-bar-border ;;  HxW= 8x8 
+(defimage extra-large-bar-border ;;  HxW= 8x8
   '#*00111100
   '#*01000010
   '#*10000001
@@ -1356,13 +1344,13 @@
 (defvar
   *slider-drag-box-images*
   (list
-    :vertical   (list 
+    :vertical   (list
 		  :small       small-vertical-drag-box
 		  :medium      medium-vertical-drag-box
 		  :large       large-vertical-drag-box
 		  :extra-large extra-large-vertical-drag-box
 		  )
-    :horizontal (list 
+    :horizontal (list
 		  :small       small-horizontal-drag-box
 		  :medium      medium-horizontal-drag-box
 		  :large       large-horizontal-drag-box
@@ -1370,201 +1358,179 @@
 		  )))
 
 
+;;; Open look menu & pushpin geometry
 
-;================================================================;
-;								 ;
-;	   OPEN LOOK MENU & PUSHPIN GEOMETRY	  		 ;
-;								 ;
-;================================================================;
-
-
-(DEFCONSTANT *OL-menu-spec-alist*
+(defparameter *ol-menu-spec-alist*
   (let
-    ((small/medium-pushpin-in
-       (bitmap-image ()
-		     '#*00000001110000000000000000
-		     '#*00001110001100000000000000
-		     '#*00110100000100000000000000
-		     '#*01001000000010000000000000
-		     '#*01001000000010000000000000
-		     '#*10001000000010000000000000
-		     '#*10001100000100000000000000
-		     '#*10000110001100000000000000
-		     '#*11000111111100000000000000
-		     '#*01000001111000000000000000
-		     '#*01110000111000000000000000
-		     '#*11111111110000000000000000
-		     '#*11001111000000000000000000))
-     
-     (small/medium-pushpin-out
-       (bitmap-image ()
-		     '#*00000000000000000000000000
-		     '#*00000000000001110000000000
-		     '#*00000000000001001000000110
-		     '#*00000000000001001000001001
-		     '#*00000000000001001111111001
-		     '#*00000000000001001000001001
-		     '#*00000111111111001000001001
-		     '#*00000011111111001000001001 
-		     '#*00000000000001001111111001
-		     '#*01100000000001001111111111
-		     '#*10010000000001111000001111
-		     '#*10010000000001111000000110
-		     '#*01100000000001110000000000))
-     
-     (large/extra-large-pushpin-in
-       (bitmap-image ()
-		     '#*00000000111000000000000000000
-		     '#*00000111000110000000000000000
-		     '#*00011100000001000000000000000
-		     '#*00100100000001000000000000000
-		     '#*01001000000000100000000000000
-		     '#*01001000000000100000000000000
-		     '#*10001000000000100000000000000
-		     '#*10001100000001100000000000000
-		     '#*10000100000001000000000000000
-		     '#*11000111000111000000000000000
-		     '#*01000011111110000000000000000
-		     '#*01100000111110000000000000000
-		     '#*01111000011100000000000000000
-		     '#*11111111111000000000000000000
-		     '#*11000111100000000000000000000))
-     
-     (large/extra-large-pushpin-out
-       (bitmap-image ()
-		     '#*00000000000000000000000000000
-		     '#*00000000000000011100000000110
-		     '#*00000000000000010010000001001
-		     '#*00000000000000010010000001001
-		     '#*00000000000000010011111111001
-		     '#*00000000000000010010000001001
-		     '#*00000000000000010010000001001
-		     '#*00000111111111110010000001001
-		     '#*00000011111111110010000001001
-		     '#*00000000000000010010000001001
-		     '#*00000000000000010011111111001
-		     '#*01100000000000010011111111111
-		     '#*10010000000000011110000001111
-		     '#*10010000000000011110000000110
-		     '#*01100000000000011100000000000)))
-    
+      ((small/medium-pushpin-in
+	(bitmap-image ()
+		      '#*00000001110000000000000000
+		      '#*00001110001100000000000000
+		      '#*00110100000100000000000000
+		      '#*01001000000010000000000000
+		      '#*01001000000010000000000000
+		      '#*10001000000010000000000000
+		      '#*10001100000100000000000000
+		      '#*10000110001100000000000000
+		      '#*11000111111100000000000000
+		      '#*01000001111000000000000000
+		      '#*01110000111000000000000000
+		      '#*11111111110000000000000000
+		      '#*11001111000000000000000000))
+       (small/medium-pushpin-out
+	(bitmap-image ()
+		      '#*00000000000000000000000000
+		      '#*00000000000001110000000000
+		      '#*00000000000001001000000110
+		      '#*00000000000001001000001001
+		      '#*00000000000001001111111001
+		      '#*00000000000001001000001001
+		      '#*00000111111111001000001001
+		      '#*00000011111111001000001001
+		      '#*00000000000001001111111001
+		      '#*01100000000001001111111111
+		      '#*10010000000001111000001111
+		      '#*10010000000001111000000110
+		      '#*01100000000001110000000000))
+       (large/extra-large-pushpin-in
+	(bitmap-image ()
+		      '#*00000000111000000000000000000
+		      '#*00000111000110000000000000000
+		      '#*00011100000001000000000000000
+		      '#*00100100000001000000000000000
+		      '#*01001000000000100000000000000
+		      '#*01001000000000100000000000000
+		      '#*10001000000000100000000000000
+		      '#*10001100000001100000000000000
+		      '#*10000100000001000000000000000
+		      '#*11000111000111000000000000000
+		      '#*01000011111110000000000000000
+		      '#*01100000111110000000000000000
+		      '#*01111000011100000000000000000
+		      '#*11111111111000000000000000000
+		      '#*11000111100000000000000000000))
+       (large/extra-large-pushpin-out
+	(bitmap-image ()
+		      '#*00000000000000000000000000000
+		      '#*00000000000000011100000000110
+		      '#*00000000000000010010000001001
+		      '#*00000000000000010010000001001
+		      '#*00000000000000010011111111001
+		      '#*00000000000000010010000001001
+		      '#*00000000000000010010000001001
+		      '#*00000111111111110010000001001
+		      '#*00000011111111110010000001001
+		      '#*00000000000000010010000001001
+		      '#*00000000000000010011111111001
+		      '#*01100000000000010011111111111
+		      '#*10010000000000011110000001111
+		      '#*10010000000000011110000000110
+		      '#*01100000000000011100000000000)))
     (let
-      ((small-OL-menu-spec
+	((small-OL-menu-spec
 	  (make-OL-menu-spec
-	    :scale :small
-	    :pushpin  (make-pushpin-spec
-			:scale :small
-			:box-width 26
-			:box-height 13
-			:baseline 9		;Relative top of box
-			:image-in small/medium-pushpin-in
-			:image-out small/medium-pushpin-out
-			:default-ring-image ()	;These are 
-			:ring-x -1		; all 
-			:ring-y -1		;  dummies for now
-			:left-margin 0
-			:top-margin 0	
-			:bottom-margin 0)
-	    
-	    :pushpin-dx    7			;horizontal distance from border to left of image
-	    :pushpin-dy   13			;vertical distance from border to pushpin baseline
-	    :title-bar-dx  2			;horizontal distance from border to title bar (left & right)
-	    :title-bar-dy  7			;vertical distance from title baseline to title bar
-	    :title-dx	   8			;horizontal (minimum) left & right title margins
-	    :title-dy     13			;vertical distance from menu border to title baseline
-	    :drop-shadow-width  5
-	    :drop-shadow-offset 6 ))
-    
-       (medium-OL-menu-spec
+	   :scale :small
+	   :pushpin  (make-pushpin-spec
+		      :scale :small
+		      :box-width 26
+		      :box-height 13
+		      :baseline 9		;Relative top of box
+		      :image-in small/medium-pushpin-in
+		      :image-out small/medium-pushpin-out
+		      :default-ring-image ()	;These are
+		      :ring-x -1		; all
+		      :ring-y -1		;  dummies for now
+		      :left-margin 0
+		      :top-margin 0
+		      :bottom-margin 0)
+	   :pushpin-dx    7			;horizontal distance from border to left of image
+	   :pushpin-dy   13			;vertical distance from border to pushpin baseline
+	   :title-bar-dx  2			;horizontal distance from border to title bar (left & right)
+	   :title-bar-dy  7			;vertical distance from title baseline to title bar
+	   :title-dx	   8			;horizontal (minimum) left & right title margins
+	   :title-dy     13			;vertical distance from menu border to title baseline
+	   :drop-shadow-width  5
+	   :drop-shadow-offset 6 ))
+	 (medium-OL-menu-spec
 	  (make-OL-menu-spec
-	    :scale :medium
-	    :pushpin  (make-pushpin-spec
-			:scale :medium
-			:box-width 26
-			:box-height 13
-			:baseline 10		;Relative top of box
-			:image-in small/medium-pushpin-in
-			:image-out small/medium-pushpin-out
-			:default-ring-image ()	;These are 
-			:ring-x -1		; all 
-			:ring-y -1		;  dummies for now
-			:left-margin 0
-			:top-margin 0
-			:bottom-margin 0)
-	    
-	    :pushpin-dx    8			;horizontal distance from border to left of image
-	    :pushpin-dy   15			;vertical distance from border to pushpin baseline
-	    :title-bar-dx  2			;horizontal distance from border to title bar (left & right)
-	    :title-bar-dy  7			;vertical distance from title baseline to title bar
-	    :title-dx	   9			;horizontal (minimum) left & right title margins
-	    :title-dy     15			;vertical distance from menu border to title baseline
-	    :drop-shadow-width  6
-	    :drop-shadow-offset 7 ))
-    
-       (large-OL-menu-spec
+	   :scale :medium
+	   :pushpin  (make-pushpin-spec
+		      :scale :medium
+		      :box-width 26
+		      :box-height 13
+		      :baseline 10		;Relative top of box
+		      :image-in small/medium-pushpin-in
+		      :image-out small/medium-pushpin-out
+		      :default-ring-image ()	;These are
+		      :ring-x -1		; all
+		      :ring-y -1		;  dummies for now
+		      :left-margin 0
+		      :top-margin 0
+		      :bottom-margin 0)
+	   :pushpin-dx    8			;horizontal distance from border to left of image
+	   :pushpin-dy   15			;vertical distance from border to pushpin baseline
+	   :title-bar-dx  2			;horizontal distance from border to title bar (left & right)
+	   :title-bar-dy  7			;vertical distance from title baseline to title bar
+	   :title-dx	   9			;horizontal (minimum) left & right title margins
+	   :title-dy     15			;vertical distance from menu border to title baseline
+	   :drop-shadow-width  6
+	   :drop-shadow-offset 7 ))
+	 (large-OL-menu-spec
 	  (make-OL-menu-spec
-	    :scale :large
-	    :pushpin  (make-pushpin-spec
-			:scale :large
-			:box-width 29
-			:box-height 15
-			:baseline 11		;Relative top of box
-			:image-in large/extra-large-pushpin-in
-			:image-out large/extra-large-pushpin-out
-			:default-ring-image ()	;These are 
-			:ring-x -1		; all 
-			:ring-y -1		;  dummies for now
-			:left-margin 0
-			:top-margin 0		;pushpin baseline relative to image
-			:bottom-margin 0)
-	    
-	    :pushpin-dx    9			;horizontal distance from border to left of image
-	    :pushpin-dy   18			;vertical distance from border to pushpin baseline
-	    :title-bar-dx  3			;horizontal distance from border to title bar (left & right)
-	    :title-bar-dy 10			;vertical distance from title baseline to title bar
-	    :title-dx	  10			;horizontal (minimum) left & right title margins
-	    :title-dy     18			;vertical distance from menu border to title baseline
-	    :drop-shadow-width  7
-	    :drop-shadow-offset 8 ))
-    
-       (extra-large-OL-menu-spec
+	   :scale :large
+	   :pushpin  (make-pushpin-spec
+		      :scale :large
+		      :box-width 29
+		      :box-height 15
+		      :baseline 11		;Relative top of box
+		      :image-in large/extra-large-pushpin-in
+		      :image-out large/extra-large-pushpin-out
+		      :default-ring-image ()	;These are
+		      :ring-x -1		; all
+		      :ring-y -1		;  dummies for now
+		      :left-margin 0
+		      :top-margin 0		;pushpin baseline relative to image
+		      :bottom-margin 0)
+	   :pushpin-dx    9			;horizontal distance from border to left of image
+	   :pushpin-dy   18			;vertical distance from border to pushpin baseline
+	   :title-bar-dx  3			;horizontal distance from border to title bar (left & right)
+	   :title-bar-dy 10			;vertical distance from title baseline to title bar
+	   :title-dx	  10			;horizontal (minimum) left & right title margins
+	   :title-dy     18			;vertical distance from menu border to title baseline
+	   :drop-shadow-width  7
+	   :drop-shadow-offset 8 ))
+	 (extra-large-OL-menu-spec
 	  (make-OL-menu-spec
-	    :scale :extra-large
-	    :pushpin  (make-pushpin-spec
-			:scale :extra-large
-			:box-width 29
-			:box-height 15
-			:baseline 11		;Relative top of box
-			:image-in large/extra-large-pushpin-in
-			:image-out large/extra-large-pushpin-out
-			:default-ring-image ()	;These are 
-			:ring-x -1		; all 
-			:ring-y -1		;  dummies for now
-			:left-margin 0
-			:top-margin  0		;pushpin baseline relative to image
-			:bottom-margin  0)
-	    
-	    :pushpin-dx   13			;horizontal distance from border to left of image
-	    :pushpin-dy   21			;vertical distance from border to pushpin baseline
-	    :title-bar-dx  3			;horizontal distance from border to title bar (left & right)
-	    :title-bar-dy 11			;vertical distance from title baseline to title bar
-	    :title-dx	14			;horizontal (minimum) left & right title margins
-	    :title-dy     21			;vertical distance from menu border to title baseline
-	    :drop-shadow-width  9
-	    :drop-shadow-offset 10)))
-    
-  `((:small . ,small-OL-menu-spec)
-    (:medium . ,medium-OL-menu-spec)
-    (:large . ,large-OL-menu-spec)
-    (:extra-large . ,extra-large-OL-menu-spec)) )))
-
-;;; ==========================================================================================	;;;
-;;; ==========================================================================================	;;;
-;;;												;;;
-;;;		     Action Button Ends, Default Rings, and Menu Marks				;;;
-;;;												;;;
-;;; ==========================================================================================	;;;
-;;; ==========================================================================================	;;;
+	   :scale :extra-large
+	   :pushpin  (make-pushpin-spec
+		      :scale :extra-large
+		      :box-width 29
+		      :box-height 15
+		      :baseline 11		;Relative top of box
+		      :image-in large/extra-large-pushpin-in
+		      :image-out large/extra-large-pushpin-out
+		      :default-ring-image ()	;These are
+		      :ring-x -1		; all
+		      :ring-y -1		;  dummies for now
+		      :left-margin 0
+		      :top-margin  0		;pushpin baseline relative to image
+		      :bottom-margin  0)
+	   :pushpin-dx   13			;horizontal distance from border to left of image
+	   :pushpin-dy   21			;vertical distance from border to pushpin baseline
+	   :title-bar-dx  3			;horizontal distance from border to title bar (left & right)
+	   :title-bar-dy 11			;vertical distance from title baseline to title bar
+	   :title-dx	14			;horizontal (minimum) left & right title margins
+	   :title-dy     21			;vertical distance from menu border to title baseline
+	   :drop-shadow-width  9
+	   :drop-shadow-offset 10)))
+      `((:small . ,small-OL-menu-spec)
+	(:medium . ,medium-OL-menu-spec)
+	(:large . ,large-OL-menu-spec)
+	(:extra-large . ,extra-large-OL-menu-spec)) )))
+
+
+;;; Action Button Ends, Default Rings, and Menu Marks
+
 
 (defimage small-horizontal-menu-mark
   '#*00000000
@@ -1667,11 +1633,10 @@
   '#*00000010000000)
 
 
-;;;
-;;;	The following abbreviated menu button definitions define only the border.
-;;;	The left/down facing menu marks or ellipses are considered to be the label of
-;;;	the button.  The abbreviated-menu-button-specs describe how to draw each size.
-;;;
+;;; The following abbreviated menu button definitions define only the
+;;; border. The left/down facing menu marks or ellipses are considered
+;;; to be the label of the button. The abbreviated-menu-button-specs
+;;; describe how to draw each size.
 
 (defimage small-abbreviated-menu-button-border
   '#*01111111111100
@@ -1748,8 +1713,6 @@
   '#*0011111111111111111110
   '#*0001111111111111111100)
 
-
-	  
 (defimage small-action-button-ends
   '#*00000011110000000
   '#*00001100001100000
@@ -1847,14 +1810,14 @@
   '#*000000000011111111000000000)
 
 
-
-;;;
-;;;	Note that the following default-ring images for use in the ends of an
-;;;	action-button/action-item are sized to be positioned *within* the border of an
-;;;	action-button.  That is, they are 3 pixels shorter in height than the above button-end
-;;;	images.  This is because they must be displayed within a (borderless) action-item as well
-;;;	as an action-button.  Their :y coordinate is always (ab-top-border-width ab), which is 1
-;;;	for an action-button, 0 for an action-item.
+;;; Note that the following default-ring images for use in the ends of
+;;; an action-button/action-item are sized to be positioned *within*
+;;; the border of an action-button.  That is, they are 3 pixels
+;;; shorter in height than the above button-end images.  This is
+;;; because they must be displayed within a (borderless) action-item
+;;; as well a s an action-button.  Their :y coordinate is always
+;;; (ab-top-border-width ab), which is 1 for an action-button, 0 for
+;;; an action-item.
 
 (defimage small-action-button-default-ring
   '#*00000000000000000
@@ -2027,17 +1990,13 @@
   '#*0000001100000000000011000000
   '#*0000000011111111111100000000)
 
-;;; ==========================================================================================	;;;
-;;; ==========================================================================================	;;;
-;;;												;;;
-;;;		     			More-Text Arrows					;;;
-;;;												;;;
-;;; ==========================================================================================	;;;
-;;; ==========================================================================================	;;;
 
-;;;  Note:  These arrows are "tightly" sized.  They are not the height of their scales' text.
-;;;  The More-Text-Arrow structure entry :offset-from-baseline is the amount to add to the text
-;;;  baseline to get the position of the top of the arrow.  
+;;; More-Text Arrows
+
+;;;  Note: These arrows are "tightly" sized. They are not the height
+;;;  of their scales' text. The More-Text-Arrow structure entry
+;;;  :offset-from-baseline is the amount to add to the text baseline
+;;;  to get the position of the top of the arrow.
 
 (defimage small-more-text-arrow
   '#*10000
@@ -2092,9 +2051,6 @@
   '#*10000000)
 
 
-
-
-
 (defparameter *more-text-arrows-by-scale*
   (list
     :small       (make-more-text-arrow
@@ -2119,13 +2075,7 @@
 		   :offset-from-text     7)))
 
 
-;;; ==========================================================================================	;;;
-;;; ==========================================================================================	;;;
-;;;												;;;
-;;;		     		   The Standard Open Look Cursor				;;;
-;;;												;;;
-;;; ==========================================================================================	;;;
-;;; ==========================================================================================	;;;
+;;; The Standard Open Look Cursor
 
 (defimage open-look-arrow-cursor
    '#*000000000000000000

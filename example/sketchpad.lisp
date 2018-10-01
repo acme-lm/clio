@@ -16,12 +16,12 @@
 ;;;                                                                                  |
 ;;;----------------------------------------------------------------------------------+
 
-   
 
 
 
 
-(in-package "CLIO-EXAMPLES")
+
+(in-package :clio-example)
 
 ;;;----------------------------------------------------------------------------+
 ;;;                                                                            |
@@ -35,7 +35,7 @@
 		  :initform :line)
    (in-progress-p :type list
                   :accessor sketchpad-in-progress-p
-                  :initform nil)   
+                  :initform nil)
    (picture       :type list
                   :accessor sketchpad-picture
                   :initform nil)
@@ -45,16 +45,16 @@
    (fill          :type symbol
                   :accessor sketchpad-fill
                   :initform '100%gray)
-   (next-x        :type (or null int16)           
+   (next-x        :type (or null int16)
                   :initform nil)
-   (next-y        :type (or null int16)           
+   (next-y        :type (or null int16)
                   :initform nil)
    (compress-exposures
                   :allocation :class
                   :initform   :on))
   (:documentation "A basic picture editor.")
   (:resources
-    (cursor      :initform 'crosshair-cursor)
+    (cursor      :initform crosshair-cursor)
     (event-mask  :initform #.(make-event-mask :exposure :button-press))))
 
 
@@ -71,7 +71,7 @@
   (with-slots
     (picture (total-width width) (total-height height))
     sketchpad
-    
+
     (let*
       ;; Compute default exposed area, if necessary.
       ((x      (or x      0))
@@ -112,7 +112,7 @@
       (rest
 	(setf (cddr point-seq) nil)
 	(nconc (nreverse-point-seq rest) point-seq))
-      (:else       
+      (:else
        point-seq))))
 
 
@@ -139,7 +139,7 @@
 
 	  ;; Yes, complete element.
 	  (end-points sketchpad)
-	  
+
 	  ;; No, update point list with new point.
 	  (setf in-progress-p (nconc (list x y) in-progress-p)
 		next-x        nil
@@ -169,10 +169,10 @@
         ;; Undisplay last rubberband line.
         (when next-x
           (display-next-point sketchpad mode))
-        
+
         ;; Update next point.
         (setf next-x x next-y y)
-        
+
         ;; Display next rubberband line.
         (display-next-point sketchpad mode)))))
 
@@ -181,7 +181,7 @@
   (with-slots (in-progress-p picture) sketchpad
     ;; Restore point list to order entered.
     (setf in-progress-p (nreverse-point-seq in-progress-p))
-    
+
     ;; Erase all old rubberband lines.
     (clear-in-progress sketchpad mode)
 
@@ -189,12 +189,12 @@
     (let ((element (add-element sketchpad mode)))
       (when element
 	(setf picture (nconc picture (list element)))))
-    
+
     ;; Get ready to begin next element.
     (setf in-progress-p nil)))
 
 
-    
+
 
 ;;;----------------------------------------------------------------------------+
 ;;;                                                                            |
@@ -206,7 +206,7 @@
   points
   width)
 
-      
+
 (defmethod add-element ((sketchpad sketchpad) (mode (eql :line)))
   (with-slots (in-progress-p line-width) sketchpad
     (unless (< (point-seq-length in-progress-p) 2)
@@ -266,7 +266,7 @@
 	min-x (min min-x (point-seq-x points i))
 	max-x (max max-x (point-seq-x points i))
 	min-y (min min-y (point-seq-y points i))
-	max-y (max max-y (point-seq-y points i))))    
+	max-y (max max-y (point-seq-y points i))))
     (and
       (>= max-x x)
       (>= max-y y)
@@ -284,7 +284,7 @@
 (defstruct (polygon (:include line))
   fill)
 
-      
+
 (defmethod add-element ((sketchpad sketchpad) (mode (eql :polygon)))
   (with-slots (in-progress-p line-width fill) sketchpad
     (unless (< (point-seq-length in-progress-p) 3)
@@ -306,10 +306,10 @@
 				    sketchpad (symbol-value (polygon-fill element))
 				    :foreground foreground
 				    :background (CONTACT-CURRENT-BACKGROUND-PIXEL sketchpad)))
-      
+
       ;; Fill interior
       (draw-lines sketchpad gcontext (line-points element) :fill-p t)
-      
+
       ;; Draw boundary
       (with-gcontext (gcontext
 		       :fill-style :solid
@@ -320,5 +320,3 @@
 	  (draw-line  sketchpad gcontext
 		      (point-seq-x (line-points element) last) (point-seq-y (line-points element) last)
 		      (point-seq-x (line-points element) 0) (point-seq-y (line-points element) 0)))))))
-
-

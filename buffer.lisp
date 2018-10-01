@@ -1,74 +1,36 @@
 ;;; -*- Mode:Lisp; Package:CLIO-OPEN; Base:10; Lowercase:T; Syntax:Common-Lisp -*-
 
 
-;;;----------------------------------------------------------------------------------+
-;;;                                                                                  |
-;;;                          TEXAS INSTRUMENTS INCORPORATED                          |
-;;;                                  P.O. BOX 149149                                 |
-;;;                             AUSTIN, TEXAS 78714-9149                             |
-;;;                                                                                  |
-;;;             Copyright (C) 1990, 1990 Texas Instruments Incorporated.             |
-;;;                                                                                  |
-;;; Permission is granted to any individual or institution to use, copy, modify, and |
-;;; distribute this software, provided that  this complete copyright and  permission |
-;;; notice is maintained, intact, in all copies and supporting documentation.        |
-;;;                                                                                  |
-;;; Texas Instruments Incorporated provides this software "as is" without express or |
-;;; implied warranty.                                                                |
-;;;                                                                                  |
-;;;----------------------------------------------------------------------------------+
+;;; Texas Instruments Incorporated
+;;; PO Box 149149
+;;; Austin, Texas 78714
+;;;
+;;; Copyright (c) 1989, 1990 Texas Instruments Incorporated.
+;;;
+;;; Permission is granted to any individual or institution to use,
+;;; copy, modify, and distribute this software, provided that this
+;;; complete copyright and permission notice is maintained, intact, in
+;;; all copies and supporting documentation.
+;;;
+;;; texas instruments incorporated provides this software "as is"
+;;; without express or implied warranty.
 
-(in-package "CLIO-OPEN")
 
-(export '(
-	  buffer
-	  buffer-insert
-	  buffer-delete
-	  buffer-subseq
-	  buffer-length
-	  buffer-number-lines
-
-	  mark
-	  move-mark
-	  )
-	'clio-open)
+(in-package :clio-open)
 
 
 ;;; Define base character type for either CLtL or ANSI Common Lisp variants.
-(deftype buffer-character ()
-  #+(or explorer ansi-common-lisp) 'base-character
-  #-(or explorer ansi-common-lisp) 'string-char)
+(deftype buffer-character () 'standard-char)
 
 ;;; PCL can't specialize methods on structure classes. Use defstruct*
 ;;; to define such structures.
 (defmacro defstruct* (name &rest slots)
-  #-pcl
-  `(defstruct ,name ,@slots)
-  
-  #+pcl
-  (flet ((translate-slot (slot &optional initform &key (type t))
-	   `(,slot
-	     :initform ,initform
-	     :type ,type
-	     :initarg ,(intern (string slot) (find-package :keyword))
-	     :accessor ,(intern (format nil "~a-~a" name slot)))))
-    (let ((pred (intern (format nil "~a-P" name))))
-      `(progn
-	(defclass ,name ()
-	  ,(mapcar #'(lambda (x) (apply #'translate-slot x)) slots))
-	(defmethod ,pred ((z t))  nil)
-	(defmethod ,pred ((z ,name)) t)
-	(defun ,(intern (format nil "MAKE-~a" name)) (&rest args)
-	  (apply #'make-instance ',name args))))))
+  `(defstruct ,name ,@slots))
 
 
-;;;----------------------------------------------------------------------------+
-;;;                                                                            |
-;;;                               Vector Functions                             |
-;;;                                                                            |
-;;;----------------------------------------------------------------------------+
+;;; Vector Functions
 
-(defconstant *vector-adjust-factor* 1.20
+(defconstant +vector-adjust-factor+ 1.20
   "Factor used to increase the size  of a vector when calling adjust-array.")
 
 (defun vector-insert (vector start &optional from (from-start 0) (count 1))
@@ -79,20 +41,19 @@ second return value is the (possibly adjusted) vector."
   (declare (type vector           vector)
 	   (type (or null vector) from)
 	   (type (integer 0 *)    start from-start count))
-  (declare (values end vector))
   (let* ((start      (min (max start 0) (fill-pointer vector)))
 	 (new-length (+ (fill-pointer vector) count))
 	 (end        (+ start count)))
-    
+
     ;; Extend vector, if necessary
     (when (> new-length (array-dimension vector 0))
-      (setf vector (adjust-array vector (ceiling (* *vector-adjust-factor* new-length))
+      (setf vector (adjust-array vector (ceiling (* +vector-adjust-factor+ new-length))
 				 :fill-pointer (fill-pointer vector))))	; Keep fill-pointer.
     (setf (fill-pointer vector) new-length)
-    
+
     ;; Make room for new elements
     (replace vector vector :start1 end :end1 new-length :start2 start)
-    
+
     ;; Insert new elements
     (when from
       (replace vector from :start1 start :start2 from-start :end2 (+ from-start count)))
@@ -170,7 +131,7 @@ Returns the position at the end of the inserted CHARS."))
       (setf (buffer-line-chars buffer-line) chars)
       new-position)))
 
-(defmethod buffer-line-insert ((buffer-line buffer-line) (chars buffer-line) position &key (start 0) end) 
+(defmethod buffer-line-insert ((buffer-line buffer-line) (chars buffer-line) position &key (start 0) end)
   (buffer-line-insert buffer-line (buffer-line-chars chars) position :start start :end end))
 
 (defun buffer-line-delete (buffer-line &optional (start 0) (end nil))
@@ -225,15 +186,15 @@ Returns the position at the end of the inserted CHARS."))
   (:documentation "Updates MARK to point to the given LINE/INDEX.
 The new MARK is returned."))
 
-(defmethod move-mark ((mark mark) (line mark) &optional index)  
-  (setf (mark-buffer mark)     (or (mark-buffer line) (mark-buffer mark)) 
+(defmethod move-mark ((mark mark) (line mark) &optional index)
+  (setf (mark-buffer mark)     (or (mark-buffer line) (mark-buffer mark))
 	(mark-line-index mark) (mark-line-index line)
 	(mark-index mark)      (or index (mark-index line)))
   mark)
 
 (defmethod move-mark ((mark mark) (position integer) &optional (index nil index-p))
   (if index-p
-      ;; Then POSITION is a line index and INDEX is a char index. 
+      ;; Then POSITION is a line index and INDEX is a char index.
       (setf (mark-line-index mark) position
 	    (mark-index mark)      index)
 
@@ -264,14 +225,14 @@ The new MARK is returned."))
        (=  (mark-line-index mark1) (mark-line-index mark2))
        (=  (mark-index mark1)      (mark-index mark2))))
 
-(defmethod mark-equal (mark1 mark2) 
+(defmethod mark-equal (mark1 mark2)
   (eql mark1 mark2))
 
 (let ((mark (make-mark)))
-  (defmethod mark-equal ((mark1 mark) mark2) 
+  (defmethod mark-equal ((mark1 mark) mark2)
     (mark-equal mark1 (buffer-position-mark (mark-buffer mark1) mark2 mark)))
-  
-  (defmethod mark-equal (mark1 (mark2 mark)) 
+
+  (defmethod mark-equal (mark1 (mark2 mark))
     (mark-equal (buffer-position-mark (mark-buffer mark2) mark1 mark) mark2)))
 
 (defgeneric mark-range (buffer mark1 mark2)
@@ -309,7 +270,7 @@ and the result of MARK-EQUAL."))
 (defmethod mark-range (buffer (mark1 integer) mark2)
   (let ((mark2 (buffer-mark-position buffer mark2)))
     (values (min mark1 mark2) (max mark1 mark2) (= mark1 mark2))))
-     
+
 (defmethod mark-range (buffer (mark1 null) mark2)
     (mark-range buffer (buffer-length buffer) mark2))
 
@@ -344,41 +305,33 @@ and the result of MARK-EQUAL."))
 (defun parse-source (source &key (start 0) end)
   "Parse the substring of SOURCE given by START/END, returning:
     1. The index behind the first #\newline, or END (whichever is smaller)
-    2. An array of buffer-line's containing all characters 
+    2. An array of buffer-line's containing all characters
        between the first and last #\newline's.
     3. The index behind the last #\newline."
   (declare (type string source))
-  (declare (values first-end buffer-lines tail-start))
-
   (let ((first-end (or (position #\newline source :start start :end end) end)))
     (cond
       ((eql first-end end) end)
-            
       (:else
        ;; Compute end of first line.
        (incf first-end)
-       
        ;; Build internal buffer-line's, if any.
        (multiple-value-bind (buffer-lines tail-start)
 	   (do ((next-end first-end) lines) (())
-	     (setf start    next-end 
-		   next-end (position #\newline source :start start :end end) 
+	     (setf start    next-end
+		   next-end (position #\newline source :start start :end end)
 		   next-end (when next-end (1+ next-end)))
-	     
 	     (unless next-end
 	       (return (values lines start)))
-	     
 	     (unless lines
 	       (setf lines (make-array *minimum-buffer-length*
 				       :adjustable   t
 				       :fill-pointer 0
 				       :element-type 'buffer-line)))
-	     
 	     (let ((buffer-line (make-buffer-line)))
-	       (buffer-line-insert buffer-line source 0 :start start :end next-end) 
+	       (buffer-line-insert buffer-line source 0 :start start :end next-end)
 	       (vector-push-extend buffer-line lines)))
 	 (values first-end buffer-lines tail-start))))))
-
 
 
 ;;;----------------------------------------------------------------------------+
@@ -389,7 +342,7 @@ and the result of MARK-EQUAL."))
 
 (defgeneric buffer-insert (buffer chars position &key start end)
   (:documentation
-    "Inserts the substring of CHARS given by START/END into the BUFFER 
+    "Inserts the substring of CHARS given by START/END into the BUFFER
 at the given POSITION and returns the updated POSITION."))
 
 
@@ -418,66 +371,66 @@ at the given POSITION and returns the updated POSITION."))
 
 (defmethod buffer-insert ((buffer buffer) (chars string) (position mark) &key (start 0) end)
   (assert (eq buffer (mark-buffer position)) nil "~s is not a mark for ~s." position buffer)
-  
+
   (when (plusp (length chars))
     (multiple-value-bind (head lines tail) (parse-source chars :start start :end end)
       (let*
 	((line        (mark-line-index position))
 	 (insert-line (buffer-line buffer line))
-	 	 
-	 ;; Insert head chars at mark position	 
+
+	 ;; Insert head chars at mark position
 	 (end-head    (buffer-line-insert
 			insert-line chars (mark-index position)
 			:start start :end head))
-	 
+
 	 ;; Initialize final line/index.
 	 (newline-p   (not (eql head end)))
 	 (index       (if
 			;; Does insert end on another line?
-			(cond			  
+			(cond
 			  (lines
 			   ;; Insert following lines into buffer line array.
 			   (multiple-value-bind (position vector)
 			       (vector-insert (buffer-lines buffer) (1+ line) lines 0 (length lines))
 			     (setf (buffer-lines buffer) vector)
 			     (setf line position)))
-			  
+
 			  (newline-p
 			   (incf line)))
-			
+
 			;; Yes, restart index at beginning of line.
 			0
-			
+
 			;; No, final index is end of head chars.
 			end-head)))
 
 	;; Handle source chars after inserted newline.
-	(when newline-p	  
+	(when newline-p
 	  (let* ((buffer-lines       (buffer-lines buffer))
 		 (insert-line-chars  (buffer-line-chars insert-line))
 		 (insert-line-length (length insert-line-chars))
 		 (prev-tail-p        (< end-head insert-line-length)))
-	    
+
 	    ;; Add a new line when...
 	    (when
 	      (or
 		;; ... tail of insert line ends in #\newline, or...
 		(and prev-tail-p
-		     (eql #\newline (elt insert-line-chars (1- insert-line-length))))  
-		
+		     (eql #\newline (elt insert-line-chars (1- insert-line-length))))
+
 		;; ... there's something to add at the end of the buffer.
 		(and (>= line (length buffer-lines)) (or tail prev-tail-p)))
-	      
+
 	      (multiple-value-bind (position buffer-lines) (vector-insert buffer-lines line)
 		(declare (ignore position))
 		(setf (buffer-lines buffer) buffer-lines)
 		(setf (elt buffer-lines line) (make-buffer-line))))
-	    
-	    (let ((next-line (elt buffer-lines line)))	    
-	      ;; Insert source tail chars at beginning of next line.	
-	      (when tail	  
+
+	    (let ((next-line (elt buffer-lines line)))
+	      ;; Insert source tail chars at beginning of next line.
+	      (when tail
 		(setf index (buffer-line-insert next-line chars index :start tail :end end)))
-	      
+
 	      ;; Move previous tail of insert line, if necesssary.
 	      (when prev-tail-p
 		(buffer-line-insert next-line insert-line index :start end-head)
@@ -485,13 +438,13 @@ at the given POSITION and returns the updated POSITION."))
 
 	;; Return position at end of inserted chars
 	(move-mark position line index))))
-	  
+
   position)
 
 (defmethod buffer-insert ((buffer buffer) (char character) (position mark) &key (start 0) end)
   (declare (ignore start end))
   (assert (eq buffer (mark-buffer position)) nil "~s is not a mark for ~s." position buffer)
-  
+
   (let*
     ((line               (mark-line-index position))
      (insert-line        (buffer-line buffer line))
@@ -499,36 +452,36 @@ at the given POSITION and returns the updated POSITION."))
      (index              (if
 			   ;; Does insert end on another line?
 			   (when (eql char #\newline) (incf line))
-			   
+
 			   ;; Yes, restart index at beginning of line.
 			   0
-			   
-			   ;; No 
+
+			   ;; No
 			   end))
      (insert-line-length (length (buffer-line-chars insert-line))))
-    
+
     ;; ;; Is there something behind an inserted newline?
     (when (and (eql char #\newline) (< end insert-line-length))
-      
-      (let ((buffer-lines (buffer-lines buffer)))	
+
+      (let ((buffer-lines (buffer-lines buffer)))
 	;; Add a new line when...
 	(when
 	  (or
 	    ;; ... tail of insert line ends in #\newline, or...
 	    (eql #\newline (elt (buffer-line-chars insert-line) (1- insert-line-length)))
-	    
+
 	    ;; ... we're at the end of the buffer.
 	    (>= line (length buffer-lines)))
-	  
+
 	  (multiple-value-bind (position buffer-lines) (vector-insert buffer-lines line)
 	    (declare (ignore position))
-	    (setf (buffer-lines buffer) buffer-lines) 
+	    (setf (buffer-lines buffer) buffer-lines)
 	    (setf (elt buffer-lines line) (make-buffer-line))))
-	
+
 	;; Move previous tail of insert line
 	(buffer-line-insert (elt buffer-lines line) insert-line index :start end)
 	(buffer-line-delete insert-line end)))
-    
+
     ;; Return position at end of inserted chars
     (move-mark position line index)))
 
@@ -547,44 +500,43 @@ at the given POSITION and returns the updated POSITION."))
    is given, then it is updated and returned; otherwise a new mark is returned."
   (declare (type buffer                  buffer)
 	   (type (or null (integer 0 *)) position))
-  (declare (values mark))
   (check-type position (or null (integer 0 *)))
   (check-type buffer buffer)
-  
+
   (let ((mark (or mark (make-mark))))
-    (setf (mark-buffer mark) buffer)            
-    
+    (setf (mark-buffer mark) buffer)
+
     (multiple-value-bind (line-index index)
 	(when position
 	  ;; Search for line/index corresponding to position.
 	  (do* ((lines  (buffer-lines buffer))
 		(nlines (length lines))
 		(line   0 (1+ line)))
-	      
+
 	      ;; Return nil if position is past end of buffer.
 	      ((>= line nlines))
-	    
+
 	    (let* ((chars  (buffer-line-chars (elt lines line)))
-		   (nchars (length chars)))	      
+		   (nchars (length chars)))
 	      (when
 		(or
 		  ;; Position within current line?
 		  (< position nchars)
-		  
+
 		  ;; Position at end of line not ending in #\newline?
 		  (and (= position nchars)
 		       (or (zerop nchars)
 			   (not (eql #\newline (elt chars (1- nchars)))))))
-		
+
 		;; Return valid line/index.
 		(return (values line position)))
-	      
+
 	      (decf position nchars))))
-      
+
       ;; Valid line/index found?
       (unless line-index
 	(multiple-value-setq (line-index index)
-	  
+
 	  ;; No, return line/index for end of buffer.
 	  (let* ((lines    (buffer-lines buffer))
 		 (max-line (1- (length lines)))
@@ -594,17 +546,17 @@ at the given POSITION and returns the updated POSITION."))
 	      ((or
 		 ;; No lines?
 		 (minusp max-line)
-		 
+
 		 ;; Last line ends in #\newline?
 		 (when (plusp max-char)
 		   (eql #\newline (elt line (1- max-char)))))
-	       
+
 	       ;; Add empty line to empty buffer.
 	       (vector-push-extend (make-buffer-line) lines)
-	       
+
 	       ;; End of buffer is begining of new line.
 	       (values (1+ max-line) 0))
-	      
+
 	      (:else
 	       (values max-line max-char))))))
       (move-mark mark line-index index))))
@@ -661,11 +613,11 @@ at the given POSITION and returns the updated POSITION."))
 	  "End mark does not point to ~s." buffer)
   (let*
     ((lines       (buffer-lines buffer))
-     
+
      (sli         (mark-line-index start))
      (start-line  (elt lines sli))
-     (eli         (mark-line-index end)) 
-     
+     (eli         (mark-line-index end))
+
      (start-start (mark-index start))
      (start-end   (when (= sli eli) (mark-index end))))
 
@@ -684,7 +636,7 @@ at the given POSITION and returns the updated POSITION."))
 	start-line (buffer-line-chars (elt lines eli)) nil
 	:start (mark-index end))
       (vector-delete lines eli (1+ eli))
-      
+
       ;; Delete any lines between start and end marks.
       (vector-delete lines (1+ sli) eli))))
 
@@ -706,8 +658,8 @@ at the given POSITION and returns the updated POSITION."))
   (let ((length 0)
 	(lines  (buffer-lines buffer)))
     (dotimes (i (length lines) length)
-      (incf length (length (buffer-line-chars (elt lines i))))))) 
-    
+      (incf length (length (buffer-line-chars (elt lines i)))))))
+
 
 
 ;;;----------------------------------------------------------------------------+
@@ -759,11 +711,11 @@ at the given POSITION and returns the updated POSITION."))
 	(start-index (mark-index start))
 	(end-line    (mark-line-index end))
 	(end-index   (mark-index end)))
-    
+
     (assert (or (> end-line start-line)
 		(and (= end-line start-line) (>= end-index start-index)))
 	    nil "Start mark is past end mark.")
-    
+
     (let ((subseq (make-array *minimum-buffer-line-length*
 			      :adjustable   t
 			      :fill-pointer 0
@@ -773,13 +725,13 @@ at the given POSITION and returns the updated POSITION."))
 	 (max   (length (buffer-lines buffer)))
 	 (line  start-line  (1+ line))
 	 (start start-index 0))
-	
+
 	((or (> line end-line) (>= line max)))
-	
+
 	(vector-append subseq (buffer-line-chars (elt lines line))
 		       start
 		       (when (= line end-line) end-index)))
-      
+
       subseq)))
 
 
@@ -843,7 +795,7 @@ at the given POSITION and returns the updated POSITION."))
 	   (max-line (1- (length blines))))
 
       (move-mark new-mark mark)
-      
+
       (unless (zerop lines)
 	(setf (mark-line-index new-mark)
 	      (max 0 (min max-line (+ (mark-line-index new-mark) lines))))
@@ -855,7 +807,7 @@ at the given POSITION and returns the updated POSITION."))
 	    (incf max))
 	  (when (> (mark-index new-mark) max)
 	   (setf (mark-index new-mark) (max max 0)))))
-	  
+
       (unless (zerop chars)
 	(setf (mark-index new-mark)
 	      (do ((position (+ (mark-index new-mark) chars))
@@ -869,7 +821,7 @@ at the given POSITION and returns the updated POSITION."))
 		     ((zerop (mark-line-index new-mark))
 		      ;; Yes, stop at first character.
 		      (setf position 0))
-		     
+
 		     ;; No, move to previous line.
 		     (t
 		      (decf (mark-line-index new-mark))
@@ -878,7 +830,7 @@ at the given POSITION and returns the updated POSITION."))
 		  ;; Trying to move past end of (not the last) line?
 		  ((and
 		     (>= position (setf max (buffer-length (elt blines (mark-line-index new-mark)))))
-		     (< (mark-line-index new-mark) max-line))		   
+		     (< (mark-line-index new-mark) max-line))
 		   ;; Yes, move to next line.
 		   (decf position max)
 		   (incf (mark-line-index new-mark)))
@@ -887,7 +839,7 @@ at the given POSITION and returns the updated POSITION."))
 		  ((> position max)
 		   ;; Yes, stop at end of buffer.
 		   (setf position max))
-		  
+
 		  (t
 		   (return position))))))
       new-mark)))

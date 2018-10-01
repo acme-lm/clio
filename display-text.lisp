@@ -18,23 +18,8 @@
 ;;;                                                                                  |
 ;;;----------------------------------------------------------------------------------+
 
-(in-package "CLIO-OPEN")
+(in-package :clio-open)
 
-(export '(
-	  *default-display-text-font*
-	  display-text
-	  display-text-alignment
-	  display-text-copy
-	  display-text-field
-	  display-text-font
-	  display-text-selection 
-	  display-text-source
-	  edit-text-mark
-	  edit-text-point
-	  make-display-text
-	  make-display-text-field
-	  )
-	'clio-open)
 
 ;;;----------------------------------------------------------------------------+
 ;;;                                                                            |
@@ -47,12 +32,12 @@
 	  :initform nil
 	  :initarg  :point
 	  :reader   edit-text-point)		       ; setf defined below
-   
+
    (mark  :type     text-mark
 	  :initarg  :mark
 	  :initform -1				       ; a value representing "undefined"
-	  :reader   edit-text-mark))		       ; setf defined below 
-  
+	  :reader   edit-text-mark))		       ; setf defined below
+
   (:resources point mark)
 
   (:documentation "Text that may be selected interactively."))
@@ -93,7 +78,7 @@ Returns the selected string."))
 
 (defgeneric text-change-highlight (text from to &optional exposed-x exposed-y exposed-width exposed-height)
   (:documentation "Turn on/off highlighting of TEXT between the FROM and TO positions."))
-  
+
 (defgeneric (setf text-caret-displayed-p)
 	    (boolean text &optional exposed-x exposed-y exposed-width exposed-height)
   (:documentation "Turn on/off the display of the TEXT caret."))
@@ -108,14 +93,14 @@ Returns the selected string."))
 ;;;----------------------------------------------------------------------------+
 
 (defmacro while-changing-marks ((text &optional time) &body body)
-  `(progn 
+  `(progn
      (setf (text-caret-displayed-p ,text) nil)
 
      ,@body
 
      ;; Update :primary ownership.
      (text-own-selection ,text :primary ,time)
- 
+
      (setf (text-caret-displayed-p ,text) t)))
 
 
@@ -149,10 +134,10 @@ then the mark is also changed to clear the current selection."))
 
 (defmethod (setf display-text-source) :after (new-value (text select-text)
 				       &key (start 0) end (from-start 0) from-end)
-  (declare (ignore new-value start end from-start from-end)) 
+  (declare (ignore new-value start end from-start from-end))
   (with-slots (buffer point mark) text
     ;; Ensure valid insertion point and clear selection.
-    
+
     ;; Note: primary method causes exposure and redisplay, so no need to update
     ;; selection highlighting here.
     (setf mark (move-mark mark (setf point (move-mark point (mark-range buffer point nil)))))))
@@ -200,36 +185,25 @@ then the mark is also changed to clear the current selection."))
 
 
 (let ((new-mark (make-mark)))
-
   (defun text-start-selection (text)
     (declare (type select-text text))
     (with-slots (display mark point buffer) (the select-text text)
       (with-event (x y time)
-	
 	;; Undisplay either caret or current text selection.
 	(setf (text-selection-displayed-p text) nil)
 	(while-changing-marks (text time)
-	  
 	  (multiple-value-bind
 	    (*current-left* *current-top* *current-width* *current-height* *current-ascent* *current-descent*)
 	      (text-geometry text)
-	    
-	    (declare (special *current-left* *current-top*
-			      *current-width* *current-height*
-			      *current-ascent* *current-descent*))
-	    
 	    (let
 	      ((new-mark            (text-point-mark text x y new-mark))
 	       (*pointer-selection* t)
 	       (display             (contact-display text)))
 	      (declare (special *pointer-selection*))
-	      
-	      
 	      ;; Initialize selection.
 	      (setf
 		mark  (move-mark mark new-mark)
 		point (move-mark point new-mark))
-	      
 	      ;; Complete text selection interaction.
 	      (catch :pointer-selection
 		(loop (process-next-event display)))
@@ -237,11 +211,10 @@ then the mark is also changed to clear the current selection."))
 		text :point text (buffer-mark-position buffer point))))))))
 
 
-
   (defun text-drag-selection (text)
     (declare (special *pointer-selection*))
     (declare (type select-text text))
-    
+
     (when (boundp '*pointer-selection*)
       (with-event (x y)
 	(let ((new-mark (text-point-mark text x y new-mark)))
@@ -262,7 +235,7 @@ then the mark is also changed to clear the current selection."))
 (defun text-handle-release (text)
   (declare (ignore text))
   (declare (special *pointer-selection*))
-  (when (boundp '*pointer-selection*) 
+  (when (boundp '*pointer-selection*)
     (throw :pointer-selection nil)))
 
 
@@ -275,17 +248,15 @@ then the mark is also changed to clear the current selection."))
 
 (defun display-selection-owner (display selection)
   "Return the owner window and time of ownership for the SELECTION."
-  (declare (values window timestamp))
   (let ((entry (getf (getf (display-plist display) 'selections) selection)))
     (values
       (first entry)		  ; Owner window
       (second entry))))		  ; Timestamp
 
-(defsetf display-selection-owner (display selection &optional timestamp) (owner) 
+(defsetf display-selection-owner (display selection &optional timestamp) (owner)
   `(setf-display-selection-owner ,display ,selection ,timestamp ,owner))
 
 (defun setf-display-selection-owner (display selection timestamp owner)
-  (declare (values window timestamp))
   (assert (or (not owner) timestamp) nil
 	  "Must give non-NIL timestamp for ~a to own ~s selection."
 	  owner selection)
@@ -324,15 +295,15 @@ then the mark is also changed to clear the current selection."))
     (selection-notify text requestor selection target time property)))
 
 (defun selection-notify (text requestor selection target time property)
-  (declare (type select-text text)) 
+  (declare (type select-text text))
   (multiple-value-bind (property-name property-value property-format transform)
       (text-convert-selection text selection property target time)
-    
-    (when property-name 
-      ;; Store converted reply property. 
+
+    (when property-name
+      ;; Store converted reply property.
       (change-property
 	requestor property-name property-value target property-format :transform transform))
-    
+
     ;; Send :selection-notify to requestor
     (send-event requestor :selection-notify nil
 		:window requestor
@@ -345,9 +316,8 @@ then the mark is also changed to clear the current selection."))
     property-name))
 
 (defgeneric text-convert-selection (text selection property target time)
-  (declare (values property value format transform))
   (:documentation "Convert SELECTION (if owned by TEXT), to the given
-TARGET type. TIME is the time of the conversion request. PROPERTY 
+TARGET type. TIME is the time of the conversion request. PROPERTY
 is the name of the property where the converted value should be stored.
 
 Return values are the PROPERTY to be used (nil if conversion refused),
@@ -380,19 +350,19 @@ to be used with change-property."))
 	     (get-property requestor property :transform #'(lambda (atom) (atom-name display atom))))
 	   (targets
 	     conversions (cddr targets)))
-	  
+
 	  ((endp targets)
 	   ;; Crock! Have to apply the transform here to avoid a CLX R4.2 bug in change-property.
 	   (mapcar
 	     ;; Protocol encodes None atoms as 0. Future version of intern-atom should do this.
 	     #'(lambda (a) (if a (intern-atom display a) 0))
 	     conversions))
-	  
+
 	  (let ((target (first targets)) (property (second targets)))
 	    (unless (selection-notify text requestor selection target time property)
 	      ;; Mark failed target
 	      (setf (getf conversions target) nil))))
-	
+
 	32))))
 
 (flet
@@ -404,33 +374,33 @@ to be used with change-property."))
 	   (and
 	     ;; Selection owned?...
 	     (eq text owner)
-	     
+
 	     ;; ...and Conversion time is...
 	     (or
 	       ;; ... CurrentTime?
 	       (not time)
-	       
+
 	       ;; Crock! Remove this test when CLX maps CurrentTime correctly to nil!!
 	       (zerop time)
-	       
+
 	       ;; ... later than owner time?
 	       (> time owner-time)))
-	   
+
 	   ;; Convert successfully?
 	   (case target
-	     
+
 	     ((:string :text)
 	      (values property
 		      (text-selection-string text selection)
 		      8
 		      #'xlib::char->card8))
-	     
+
 	     (:timestamp
 	      (values property (list owner-time) 32 nil))
-	     
+
 	     (:targets
 	      (values property
-		      '(:string :text :targets :timestamp) 
+		      '(:string :text :targets :timestamp)
 		      32
 		      #'(lambda (a) (intern-atom display a))))))))))
 
@@ -443,7 +413,6 @@ to be used with change-property."))
 
 
 (defgeneric text-selection-string (text selection)
-  (declare (values string))
   (:documentation "Return the TEXT string for the given SELECTION."))
 
 (defmethod text-selection-string ((text select-text) (selection (eql :primary)))
@@ -451,29 +420,25 @@ to be used with change-property."))
     (multiple-value-bind (start end) (text-selection-range text)
       (if start (buffer-subseq buffer start end) ""))))
 
-
-
-
 (defgeneric text-own-selection (text selection time)
-  (declare (values own-p))
   (:documentation "Assert TEXT (non)ownership of the SELECTION at the given TIME.
-This function should call (setf selection-owner) with owner as TEXT or nil, 
+This function should call (setf selection-owner) with owner as TEXT or nil,
 as needed."))
 
 (defmethod text-own-selection ((text contact) selection time)
   (with-slots (display) text
     (or
       ;; Selection already owned?
-      (let ((owner (display-selection-owner display selection))) 
+      (let ((owner (display-selection-owner display selection)))
 	(unless (or (not owner) (eq owner text))
 	  ;; Yes, change owner window.
 	  (text-selection-clear owner selection)
-	  
+
 	  ;; Record new owner window/time.
 	  (setf (selection-owner display selection time)
 		(setf (display-selection-owner display selection time) text)))
 	owner)
-      
+
       ;; Selection ownership acquired?
       (progn
 	(unless time
@@ -483,13 +448,13 @@ as needed."))
 	      `((:property-notify :current-time)
 		,#'(lambda (c) (declare (ignore c))
 			   (with-event ((event-time time)) (setf time event-time)))))
-	    
+
 	    ;; Null property change just to generate a :property-notify timestamp
 	    (change-property text :current-time nil :string 8 :mode :append)
-	    
+
 	    ;; Wait for :property-notify to be processed.
 	    (do () (time) (process-next-event display))))
-	
+
 	;; Ownership request successful?
 	(when (eq (setf (selection-owner display selection time) text)
 		  (selection-owner display selection))
@@ -501,12 +466,12 @@ as needed."))
   (with-slots (display point) text
     ;; Need to own selection?
     (if (text-selection-range text)
-	
+
 	;; Yes, ownership request successful?
 	(or (call-next-method)
 	    ;; No, abandon selection.
-	    (when (setf (edit-text-mark text) point) nil)) 
-	
+	    (when (setf (edit-text-mark text) point) nil))
+
 	;; No, abandon ownership, if necessary
 	(multiple-value-bind (owner owner-time) (display-selection-owner display selection)
 	  (when (eq text owner)
@@ -523,7 +488,7 @@ as needed."))
 ;;;                            display-text-field                              |
 ;;;                                                                            |
 ;;;----------------------------------------------------------------------------+
- 
+
 (defparameter *default-display-text-font*
 	      "-*-*-medium-r-*-*-*-*-*-*-*-*-iso8859-1")
 
@@ -533,20 +498,17 @@ as needed."))
 (defcontact display-text-field (gravity-mixin core contact)
   ((font      :type     fontable
 	      :initform *default-display-text-field-font*
-	      :reader   display-text-font	       ; setf defined below
+	      ;; setf defined below
+	      :reader   display-text-font
 	      :initarg  :font)
-
    (buffer    :type     (or buffer buffer-line)
-	      :initform (make-buffer-line)) 
-
+	      :initform (make-buffer-line))
    (compress-exposures
               :initform :on))
-  
   (:resources
     (border-width :initform 0)
     font
     (source :type string :initform ""))
-
   (:documentation
     "Presents a single line of text for viewing."))
 
@@ -566,12 +528,12 @@ as needed."))
 
   (multiple-value-bind (width height) (preferred-size text)
     (change-geometry text :width width :height height :accept-p t))
-  
+
   (when (realized-p text)
     ;; Delay redisplay until :exposure handling to allow other class methods
     ;; a chance to prepare for redisplay.
     (clear-area text :exposures-p t))
-  
+
   new-value)
 
 
@@ -583,7 +545,7 @@ as needed."))
     (buffer-subseq buffer start end)))
 
 (defgeneric (setf display-text-source) (new-string text &key start end from-start from-end)
-  (:documentation 
+  (:documentation
      "Replace the source substring of TEXT given by START/END with the
       substring of NEW-STRING given by FROM-START/FROM-END."))
 
@@ -596,12 +558,12 @@ as needed."))
 
       (multiple-value-bind (width height) (preferred-size text)
 	(change-geometry text :width width :height height :accept-p t))
-      
+
       (when (realized-p text)
 	;; Delay redisplay until :exposure handling to allow other class methods
 	;; a chance to prepare for redisplay.
 	(clear-area text :exposures-p t))
-      
+
       new-value)))
 
 
@@ -628,9 +590,9 @@ as needed."))
 (defmethod display ((text display-text-field) &optional x y width height &key)
   (declare (ignore x y width height))
   (with-slots (buffer) text
-    (multiple-value-bind (x y) (text-base-point text)	    
+    (multiple-value-bind (x y) (text-base-point text)
       (text-display-chars text (buffer-line-chars buffer) x y)
-      
+
       ;; Return base position for other methods to use
       (values x y))))
 
@@ -658,11 +620,11 @@ as needed."))
   (with-slots (buffer) text
     (unless (and base-x base-y)
       (multiple-value-setq (base-x base-y) (text-base-position text position)))
-    
+
     ;; Clear line
     (when clear-p
       (text-clear-line text base-x base-y))
-      
+
     ;; Redisplay chars
     (text-display-chars
       text (buffer-line-chars buffer)
@@ -703,7 +665,7 @@ as needed."))
   (with-slots (buffer font) text
     (multiple-value-bind (text-width a d l r font-ascent font-descent)
 	(text-extents font (buffer-line-chars buffer))
-      (declare (ignore a d l r))      
+      (declare (ignore a d l r))
       (values text-width (+ font-ascent font-descent) font-ascent font-descent))))
 
 (defmethod rescale :before ((text display-text-field))
@@ -718,7 +680,7 @@ as needed."))
     ((contact-width width) (contact-height height) (contact-border-width border-width))
     text
     (multiple-value-bind (text-width text-height) (display-text-extent text)
-            
+
       (values
 	(max text-width (or width contact-width))
 	(max text-height (or height contact-height))
@@ -739,64 +701,64 @@ as needed."))
 	       *current-ascent* *current-descent*)
       (compute-text-geometry text)))
 
-(defgeneric compute-text-geometry (text)
-  (declare (values left top width height ascent descent)))
+(defgeneric compute-text-geometry (text))
 
-(defmethod compute-text-geometry ((text display-text-field)) 
+
+(defmethod compute-text-geometry ((text display-text-field))
   (with-slots (gravity) (the display-text-field text)
     (multiple-value-bind (width height ascent descent) (display-text-extent text)
       (multiple-value-bind (left top)
-	  
+
 	  ;; Note: use FLOOR to compute position to be consistent with repositioning
 	  ;; according to bit-gravity. Needed for small exposed regions to match
 	  ;; up properly when redisplayed.
-	  
+
 	  (case gravity
 	    (:north-west
 	     (values
 	       (display-clip-x text)
 	       (display-clip-y text)))
-	    
+
 	    (:north
 	     (values
 	       (+ (display-clip-x text) (floor (- (display-clip-width text) width) 2))
 	       (display-clip-y text)))
-	    
+
 	    (:north-east
 	     (values
 	       (+ (display-clip-x text) (- (display-clip-width text) width))
 	       (display-clip-y text)))
-	    
+
 	    (:east
 	     (values
 	       (+ (display-clip-x text) (- (display-clip-width text) width))
 	       (+ (display-clip-y text) (floor (- (display-clip-height text) height) 2))))
-	    
+
 	    (:center
 	     (values
 	       (+ (display-clip-x text) (floor (- (display-clip-width text) width) 2))
 	       (+ (display-clip-y text) (floor (- (display-clip-height text) height) 2))))
-	    
+
 	    (:west
 	     (values
 	       (display-clip-x text)
 	       (+ (display-clip-y text) (floor (- (display-clip-height text) height) 2))))
-	    
+
 	    (:south-east
 	     (values
 	       (+ (display-clip-x text) (- (display-clip-width text) width))
 	       (+ (display-clip-y text) (- (display-clip-height text) height))))
-	    
+
 	    (:south
 	     (values
 	       (+ (display-clip-x text) (floor (- (display-clip-width text) width) 2))
 	       (+ (display-clip-y text) (- (display-clip-height text) height))))
-	    
+
 	    (:south-west
 	     (values
 	       (display-clip-x text)
 	       (+ (display-clip-y text) (- (display-clip-height text) height)))))
-	
+
 	(values left top width height ascent descent)))))
 
 
@@ -830,50 +792,50 @@ beginning at the given POSITION."))
 (defmethod text-point-mark ((text display-text-field) x y &optional mark)
   (declare (ignore mark))
   (with-slots (buffer) text
-  
+
     ;; Compute extent.
     (multiple-value-bind (left top width height)
-	(text-geometry text) 
- 
+	(text-geometry text)
+
       (cond
 	(;; Return first position if above or left of extent
 	 (or (< x left) (< y top))
 	 0)
-	
+
 	(;; Return end position if below or righ of extent
 	 (or (>= x (+ left width)) (>= y (+ top height)))
 	 (buffer-length buffer))
-    
+
 	(t
 	 (text-point-index text nil left x))))))
 
 
 (defgeneric text-point-index (text line left x)
   (:documentation "Return the index of the character in the given LINE of the TEXT
-which is at the given X position. LEFT gives the left edge position of the TEXT extent 
+which is at the given X position. LEFT gives the left edge position of the TEXT extent
 rectangle."))
 
 (let ((char-string (make-string 1))
       (char-index  (make-array 1 :element-type 'card8)))
-  
+
 
   (defmethod text-point-index ((text display-text-field) line left x)
     (declare (ignore line))
-    
+
     (with-slots (font buffer) text
       (do* ((index-x left)
 	    (index   0)
 	    (chars  (buffer-line-chars buffer))
 	    (max    (length chars)))
-	   
+
 	   ((= index max) index)
-	
+
 	(setf (elt char-string 0) (elt chars index))
 	(translate-default char-string 0 1 font char-index 0)
 	(let ((char-width (char-width font (elt char-index 0))))
 	  (when (> (+ index-x (pixel-round char-width 2)) x)
 	    (return index))
-	  
+
 	  (incf index-x char-width)
 	  (incf index))))))
 
@@ -892,10 +854,10 @@ the TOP, ASCENT, DESCENT of the TEXT extent rectangle."))
 
 (defmethod text-mark-point ((text display-text-field) mark)
   ;; Compute extent.
-  (multiple-value-bind (left top w h ascent) 
+  (multiple-value-bind (left top w h ascent)
       (text-geometry text)
     (declare (ignore w h))
-    
+
     (with-slots (buffer font) text
       (values
 	(+ left (buffer-text-extents buffer font 0 mark))
@@ -917,9 +879,9 @@ the TOP, ASCENT, DESCENT of the TEXT extent rectangle."))
 	      :initarg  :alignment
 	      :accessor display-text-alignment)
 
-   (extent-top       
+   (extent-top
               :type     integer)
-   (extent-left      
+   (extent-left
               :type     integer)
    (extent-width
               :type     (integer 0 *))
@@ -928,7 +890,7 @@ the TOP, ASCENT, DESCENT of the TEXT extent rectangle."))
 
    (compress-exposures
               :initform :off))
-  
+
   (:resources
     alignment
     (font :initform  *default-display-text-font*))
@@ -1015,7 +977,7 @@ the TOP, ASCENT, DESCENT of the TEXT extent rectangle."))
       text 0 nil nil
       (or exposed-x 0) (or exposed-y 0)
       exposed-width exposed-height))
-    
+
   ;; Display caret or current selection
   (setf (text-selection-displayed-p text exposed-x exposed-y exposed-width exposed-height) t)
   (setf (text-caret-displayed-p text exposed-x exposed-y exposed-width exposed-height) t))
@@ -1023,13 +985,13 @@ the TOP, ASCENT, DESCENT of the TEXT extent rectangle."))
 
 (let ((char-string (make-string 1))
       (char-index  (make-array 1 :element-type 'card8)))
-  
+
   (defun text-clipped-line (text line start end clip-left clip-right)
     "Clip the substring of LINE in TEXT given by START/END to the horizontal region
 between CLIP-LEFT and CLIP-RIGHT. Returns the start/end indexes and the left x position
 of the clipped substring."
     (declare (type display-text text))
-    
+
     (flet
       ((actual-width (font char)
 	(cond
@@ -1038,42 +1000,42 @@ of the clipped substring."
 	   (translate-default char-string 0 1 font char-index 0)
 	   (char-width font (elt char-index 0)))
 	  (t 0))))
-				   
+
     (with-slots (font buffer) (the display-text text)
       (let*
 	((index-x (text-base-x text line))
 	 (index   0)
-	 
+
 	 (chars   (buffer-line-chars (elt (buffer-lines buffer) line)))
 	 (max     (length chars))
 	 (end     (if end (min max end) max))
 
 	 (start   (do (char-right)
 		      ((= index end) index)
-		    
-		    ;; Find right edge of next char 
+
+		    ;; Find right edge of next char
 		    (setf char-right (+ index-x (actual-width font (elt chars index))))
-		    
+
 		    ;; Is this the first char in start/end subseq that intersects
 		    ;; the clip region?
 		    (when (and (>= index start) (> char-right clip-left))
 		      (return index))
-		    
+
 		    ;; Setf index-x to left edge of next char
 		    (incf index)
 		    (setf index-x char-right)))
-	 
+
 	 (start-x index-x))
 
 	(values
 	  start
-	  
+
 	  ;; Find end of clipped substring.
-	  (do ()	      
+	  (do ()
 	      ;; Is this the last char in start/end subseq past that intersects
 	      ;; the clip region?
 	      ((or (>= index-x clip-right) (= index end)) index)
-	    
+
 	    ;; Find left edge of next char.
 	    (incf index-x (actual-width font (elt chars index)))
 	    (incf index))
@@ -1081,48 +1043,48 @@ of the clipped substring."
 	  start-x))))))
 
 (defgeneric text-refresh (text start end &optional clear-p exposed-x exposed-y exposed-width exposed-height)
-  (:documentation "Draw TEXT characters from START to END. By default CLEAR-P is true, in which case the displayed 
-area is cleared first. If EXPOSED-X, EXPOSED-Y, EXPOSED-WIDTH, and EXPOSED-HEIGHT are given, then 
+  (:documentation "Draw TEXT characters from START to END. By default CLEAR-P is true, in which case the displayed
+area is cleared first. If EXPOSED-X, EXPOSED-Y, EXPOSED-WIDTH, and EXPOSED-HEIGHT are given, then
 characters are refreshed only if they lie in the exposed area."))
 
 
 (defmethod text-refresh ((text display-text) (start mark) (end mark)
-			   &optional (clear-p t) (exposed-x 0) (exposed-y 0) exposed-width exposed-height) 
+			   &optional (clear-p t) (exposed-x 0) (exposed-y 0) exposed-width exposed-height)
   ;; Update extent cache
   (text-geometry text)
-  
+
   (with-slots (buffer font extent-left extent-top extent-width extent-height width height) text
-    
+
     ;; Redisplay only text inside the exposed region.
     (multiple-value-bind (exposed-x exposed-y exposed-width exposed-height)
 	(area-overlaps-p
 	  exposed-x exposed-y (or exposed-width (- width exposed-x)) (or exposed-height (- height exposed-y))
 	  extent-left extent-top extent-width extent-height)
-      
+
       (when exposed-x
 	(let*
 	  ((ascent         (font-ascent font))
 	   (descent        (font-descent font))
-	   (exposed-right  (+ exposed-x exposed-width)) 
-	   
+	   (exposed-right  (+ exposed-x exposed-width))
+
 	   (sli            (mark-line-index start))
 	   (next-line      (max sli
 				(text-point-line
 				  text extent-top ascent descent
 				  exposed-y)))
-	   
+
 	   (eli            (mark-line-index end))
 	   (end-line       (min eli
 				(text-point-line
 				  text extent-top ascent descent
 				  (+ exposed-y exposed-height))))
-	   
+
 	   (nlines         (1+ (- end-line next-line)))
 	   (lines          (buffer-lines buffer))
 	   (line-height    (+ ascent descent))
-	   (base-y         (+ extent-top ascent (* next-line line-height)))) 
-	  
-	  
+	   (base-y         (+ extent-top ascent (* next-line line-height))))
+
+
 	  (dotimes (i nlines)
 	    (multiple-value-bind (start end start-x)
 		(text-clipped-line text next-line
@@ -1133,7 +1095,7 @@ characters are refreshed only if they lie in the exposed area."))
 				       (mark-index end)
 				       nil)
 				   exposed-x exposed-right)
-	      
+
 	      (text-display-chars
 		text (buffer-line-chars (elt lines next-line))
 		start-x base-y
@@ -1163,9 +1125,9 @@ characters are refreshed only if they lie in the exposed area."))
 
 (defmethod text-change-highlight ((text display-text) (from mark) (to mark)
 				  &optional exposed-x exposed-y exposed-width exposed-height)
-  (when (realized-p text)    
+  (when (realized-p text)
   (with-slots (font buffer foreground  clip-rectangle) text
-    
+
     (multiple-value-bind (from to equal-p) (mark-range buffer from to)
       (unless equal-p
 	(let*
@@ -1183,7 +1145,7 @@ characters are refreshed only if they lie in the exposed area."))
 	      (do ((line fli (1+ line))
 		   (y (- (text-base-y text fli ascent descent) ascent) (+ y line-height)))
 		  ((> line tli))
-		
+
 		(let ((start-index (if (= line fli) (mark-index from) 0)))
 		  (draw-rectangle
 		    text gc
@@ -1194,7 +1156,7 @@ characters are refreshed only if they lie in the exposed area."))
 		      :end (when (= line tli) (mark-index to)))
 		    line-height
 		    t)))))
-	    
+
 	    (using-gcontext
 	      (gc :drawable   text
 		  :function   boole-xor
@@ -1202,9 +1164,9 @@ characters are refreshed only if they lie in the exposed area."))
 		  :foreground (logxor
 				foreground
 				(contact-current-background-pixel text)))
-	      
+
 	      (if exposed-x
-		  
+
 		  ;; Clip highlight to intersection of clip rectangle and exposed region.
 		  (let
 		    ((old-clip-x      (display-clip-x text))
@@ -1223,21 +1185,21 @@ characters are refreshed only if they lie in the exposed area."))
 			  (display-clip-y text)      new-clip-y
 			  (display-clip-width text)  new-clip-width
 			  (display-clip-height text) new-clip-height)
-		    
+
 			;; Draw highlight when intersection exists.
 			(with-gcontext (gc :clip-mask clip-rectangle)
 			  (draw-highlight gc))
-		    
+
 			;; Restore clip rectangle
 			(setf (display-clip-x text)      old-clip-x
 			      (display-clip-y text)      old-clip-y
 			      (display-clip-width text)  old-clip-width
 			      (display-clip-height text) old-clip-height))))
-		  
+
 		  ;; Else draw highlight without additional clipping
 		  (draw-highlight gc))))))))))
-	  
-	  
+
+
 ;;;----------------------------------------------------------------------------+
 ;;;                                                                            |
 ;;;                                 Geometry                                   |
@@ -1278,7 +1240,7 @@ characters are refreshed only if they lie in the exposed area."))
       (values extent-left extent-top extent-width extent-height ascent descent))))
 
 (defmethod text-point-mark ((text display-text) x y &optional mark)
-  (with-slots (font buffer extent-top extent-left extent-width extent-height) text  
+  (with-slots (font buffer extent-top extent-left extent-width extent-height) text
     (let
       ((mark (or mark (make-mark)))
        (line (text-point-line
@@ -1290,33 +1252,23 @@ characters are refreshed only if they lie in the exposed area."))
 
 (defun text-base-x (text line &optional (start 0))
   "Return the left edge of the START position of the LINE in the TEXT."
-  (declare (type display-text text)
-	   (type integer     line))
-  (declare (values int16))
-
   ;; Ensure extent is defined.
   (text-geometry text)
-  
-  (with-slots (font buffer alignment extent-left extent-width) (the display-text text)
+  (with-slots (font buffer alignment extent-left extent-width)  text
     (let ((chars (buffer-line-chars (elt (buffer-lines buffer) line))))
       (+ (case alignment
 	   (:left   extent-left)
 	   (:center (+ extent-left (floor (- extent-width (text-width font chars)) 2)))
-	   (:right  (+ extent-left (- extent-width (text-width font chars)))))
-	 
+	   (:right  (+ extent-left (- extent-width (text-width font chars))))
+	   (t 0))
 	 (if (plusp start)
 	     (text-width font chars :end start)
 	     0)))))
 
 (defun text-base-y (text line &optional ascent descent)
   "Return the baseline position of the LINE in the TEXT."
-  (declare (type display-text text)
-	   (type integer     line))
-  (declare (values integer))
-
   ;; Ensure extent is defined.
-  (text-geometry text) 
-  
+  (text-geometry text)
   (with-slots (font extent-top) (the display-text text)
     (+ extent-top
        (* line (+ (or ascent (setf ascent (font-ascent font)))
@@ -1339,7 +1291,7 @@ characters are refreshed only if they lie in the exposed area."))
 
 (let ((char-string (make-string 1))
       (char-index  (make-array 1 :element-type 'card8)))
-  
+
   (defmethod text-point-index ((text display-text) line left x)
     (with-slots (font buffer) text
       (do* ((index-x left)
@@ -1348,20 +1300,20 @@ characters are refreshed only if they lie in the exposed area."))
 	    (max    (let* ((max (length chars)) (last (1- max)))
 		      ;; Can't point or insert after #\newline!
 		      (if (and (plusp max) (eql #\newline (elt chars last))) last max))))
-	   
+
 	   ((= index max) index)
-	
+
 	(let ((char (elt chars index)))
 	  (when (graphic-char-p char)
 	    (setf (elt char-string 0) char)
 	    (translate-default char-string 0 1 font char-index 0)
 	    (let ((char-width (char-width font (elt char-index 0))))
 	      (when (> (+ index-x (pixel-round char-width 2)) x)
-		(return index))	  
+		(return index))
 	      (incf index-x char-width))))))))
-	   
-	   
-	   
+
+
+
 (defmethod text-point-line ((text display-text) top ascent descent y)
   (floor (- y top) (+ ascent descent)))
 
@@ -1433,7 +1385,7 @@ characters are refreshed only if they lie in the exposed area."))
 ;;;----------------------------------------------------------------------------+
 
 
-;;; When text is copied or cut to the Clipboard, then the client becomes the owner 
+;;; When text is copied or cut to the Clipboard, then the client becomes the owner
 ;;; of the :CLIPBOARD selection.  During this time, the current :CLIPBOARD value is
 ;;; a string stored on the display plist.  (The current :CLIPBOARD value is unique to
 ;;; server; in particular, individual text contacts do not need to store this value
@@ -1467,23 +1419,17 @@ characters are refreshed only if they lie in the exposed area."))
 
 (defun clipboard-copy (text)
   (declare (type display-text-field text))
-  
   (with-slots (buffer display) text
-    (let ((time (when (processing-event-p) (with-event (time) time)))) 
-
+    (let ((time (when (processing-event-p) (with-event (time) time))))
       (multiple-value-bind (start end) (text-selection-range text)
 	(if (and start (text-own-selection text :clipboard time))
-
 	    (setf (display-clipboard-text display) (buffer-subseq buffer start end))
-	  
 	    (when start
 	      (warn "~a ~a.~%~a"
 		    "Cannot acquire :CLIPBOARD selection for"
 		    text
 		    "Text not copied to Clipboard.")))))))
 
-(defmethod text-selection-string ((text select-text) (selection (eql :clipboard))) 
+(defmethod text-selection-string ((text select-text) (selection (eql :clipboard)))
   (with-slots (display) text
     (display-clipboard-text display)))
-
-

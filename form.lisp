@@ -35,29 +35,7 @@
 
 (in-package "CLIO-OPEN")
 
-(export '(
-	  form
-	  make-form
-	  make-horizontal-link
-	  make-vertical-link
-	  form-max-height
-	  form-max-width
-	  form-min-height
-	  form-min-width
-	  link-from
-	  link-to
-	  link-orientation
-	  link-attach-from
-	  link-attach-to
-	  link-length
-	  link-maximum
-	  link-minimum
-	  link-update
-	  find-link
-	  )
-	'clio-open)
 
-;;;
 ;;;  The Form contact itself.  Horizontal-links and vertical-links normally
 ;;;  store lists of links that connect directly to the Form, but they can
 ;;;  also be passed as initargs to make-form in a form (no pun) that specifies
@@ -1751,7 +1729,7 @@ and its range of values.  All may be any INT16;  MAXIMUM may also be
 			 ((length> tentative-link-length (link-maximum link))
 			  (setq bottom-excess (max bottom-excess
 						   (- tentative-link-length (link-maximum link)))))))))
-	     
+
 	   (cond ((and (zerop left-excess)
 		       (zerop right-excess)
 		       (zerop top-excess)
@@ -1774,10 +1752,10 @@ and its range of values.  All may be any INT16;  MAXIMUM may also be
 		      (setf (link-tentative-length link) (tentative-link-length-horizontal link)))
 		    (dolist (link (contact-constraint child :vertical-links))
 		      (setf (link-tentative-length link) (tentative-link-length-vertical link)))
-		    
+
 		    ;;  We're approving fully, so actually do the change.
 		    (really-change-the-children form))
-		  
+
 		  ;;  All done, return the indicated values.
 		  (values approved-p
 			  requested-x
@@ -1785,7 +1763,7 @@ and its range of values.  All may be any INT16;  MAXIMUM may also be
 			  requested-width
 			  requested-height
 			  requested-border-width))
-		 
+
 		 ((and (or (zerop left-excess)
 			   (zerop right-excess)
 			   (and (minusp left-excess)
@@ -1861,7 +1839,7 @@ and its range of values.  All may be any INT16;  MAXIMUM may also be
 				requested-height
 				requested-border-width)
 			(manage-geometry-hard-case))))
-		 
+
 		 (:else
 		  ;;  The "hard" case -- the proposed change would violate one or more of
 		  ;;  the links, so essentially do change-layout again with the requested

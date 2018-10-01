@@ -19,38 +19,35 @@
 ;;;----------------------------------------------------------------------------------+
 
 
-(in-package "USER")
+;; (in-package "USER")
 
-(assert
-  (find-package "COMMON-LISP") ()
-  "COMMON-LISP package does not exist. 
+;; (assert
+;;   (find-package "COMMON-LISP") ()
+;;   "COMMON-LISP package does not exist.
 
- Please create a package named COMMON-LISP which exports CLOS and CLCS.
- (You may need to make this a nickname of the LISP package.)
-")
+;;  Please create a package named COMMON-LISP which exports CLOS and CLCS.
+;;  (You may need to make this a nickname of the LISP package.)
+;; ")
 
-(assert
-  (find-package "CLUE") ()
-  "CLUE must be loaded before making CLIO-OPEN.")
+;; (assert
+;;   (find-package "CLUE") ()
+;;   "CLUE must be loaded before making CLIO-OPEN.")
 
 
 ;; The Open Look implementation of CLIO goes in CLIO-OPEN...
-(unless (find-package "CLIO-OPEN")
-  (make-package "CLIO-OPEN" :use '(:common-lisp :clue))
-  
-  
-  #-(and clx-mit-r4 ansi-common-lisp)
-  ;; Crock! XLIB and COMMON-LISP both want to export define-condition!
-  ;; Shadow all XLIB externals already exported by COMMON-LISP.
-  (shadowing-import
-    (let (shadows)
-      (do-external-symbols (s :xlib shadows)
-	(multiple-value-bind (symbol status) (find-symbol (symbol-name s) :common-lisp)
-	  (when (and symbol (eq :external status))
-	    (push symbol shadows)))))
-    :clio-open)
-
-  (use-package :xlib :clio-open))
+;;(unless (find-package "CLIO-OPEN")
+  ;; (make-package "CLIO-OPEN" :use '(:common-lisp :clue))
 
 
+  ;; #-(and clx-mit-r4 ansi-common-lisp)
+  ;; ;; Crock! XLIB and COMMON-LISP both want to export define-condition!
+  ;; ;; Shadow all XLIB externals already exported by COMMON-LISP.
+  ;; (shadowing-import
+  ;;   (let (shadows)
+  ;;     (do-external-symbols (s :xlib shadows)
+  ;; 	(multiple-value-bind (symbol status) (find-symbol (symbol-name s) :common-lisp)
+  ;; 	  (when (and symbol (eq :external status))
+  ;; 	    (push symbol shadows)))))
+  ;;   :clio-open)
 
+  ;; (use-package :xlib :clio-open))

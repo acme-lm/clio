@@ -21,35 +21,13 @@
 (in-package "CLIO-OPEN")
 
 
-(export '(
-	  table
-	  make-table
-	  table-column-alignment
-	  table-column-width
-	  table-columns
-	  table-delete-policy
-	  table-layout-size-policy
-	  table-member
-	  table-row-alignment
-	  table-row-height
-	  table-same-height-in-row
-	  table-same-width-in-column
-	  table-separator
-	  table-row
-	  table-column
-	  )
-	'clio-open)
-
-;;;
 ;;;  Call-Tree...
-;;;
-
 
 ;;;   Preferred-Size (Table)
 ;;;   .  check-for-existing-wis
 ;;;   .  place-children-physically
 ;;;   .  .  put-kids-into-maximum-unaligned-columns
-;;;   .  .  .  find-first-parents-width 
+;;;   .  .  .  find-first-parents-width
 ;;;   .  .  .  assign-kids-to-rows-and-columns
 ;;;   .  .  .  preferred-size (child)
 ;;;   .  .  .  move (child)
@@ -62,7 +40,7 @@
 ;;;   .  .  .  .  preferred-size (child)
 ;;;   .  .  .  preferred-size (child)
 ;;;   .  .  .  adjust-column-widths-so-child-fits
-;;;   .  .  put-kids-into-specified-number-of-columns   
+;;;   .  .  put-kids-into-specified-number-of-columns
 ;;;   .  .  .  assign-kids-to-rows-and-columns
 ;;;   .  .  .  preferred-size (child)
 ;;;   .  .  scan-for-largest-children
@@ -90,9 +68,9 @@
 ;;;  Basic Organization and Flow:
 ;;;	The Table contact lays out its children per the values of its policy resources and the
 ;;;	row/column constraints of its children, with the resource values always taking precedence
-;;;	over the children's constraint values.  
+;;;	over the children's constraint values.
 ;;;
-;;;	The function place-children-physically does the real work of Table.  
+;;;	The function place-children-physically does the real work of Table.
 ;;;
 ;;;	The differences in Table's logical flow for the possible values for the :columns resource
 ;;;	are embodied primarily in the three routines
@@ -112,7 +90,7 @@
 
 
 ;;;  ===========================================================================
-;;;		T h e   T A B L E   L a y o u t   C o n t a c t 
+;;;		T h e   T A B L E   L a y o u t   C o n t a c t
 ;;;  ===========================================================================
 
 (DEFCONTACT table (gravity-mixin spacing-mixin core composite)
@@ -120,12 +98,12 @@
 			:reader  	table-column-alignment	; SETF method defined below.
 			:initarg	:column-alignment
 			:initform	:left)
-   
+
    (column-width	:type		(OR (MEMBER :maximum) cons (integer 1 *))
 			:reader  	table-column-width	; SETF method defined below.
 			:initarg	:column-width
 			:initform	:maximum)
-   
+
    (columns		:type		(OR (integer 1 *) (MEMBER :maximum :none))
 			:reader  	table-columns	        ; SETF method defined below.
 			:initarg	:columns
@@ -174,7 +152,7 @@
     columns
     delete-policy
     layout-size-policy
-    row-alignment    
+    row-alignment
     row-height
     same-height-in-row
     same-width-in-column
@@ -195,7 +173,7 @@
 (DEFUN make-table (&rest initargs &key &allow-other-keys)
   (APPLY #'make-contact 'table initargs))
 
-;;;  ===========================================================================  ;;; 
+;;;  ===========================================================================  ;;;
 ;;;	      ORG-ENTRY: the entries on the what-if-organization list		  ;;;
 ;;;  ===========================================================================  ;;;
 
@@ -214,7 +192,7 @@
 		    :width p-w :height p-h :border-width p-b-w)))
 
 
-;;;  ===========================================================================  ;;; 
+;;;  ===========================================================================  ;;;
 ;;;		       What-if Structures and Their management			  ;;;
 ;;;  ===========================================================================  ;;;
 
@@ -247,7 +225,6 @@
   ;;  Returns the first (newest) wis found with width/height.
   ;;  If no wis satisfying width/height exists, create a new one unless DONT-CREATE-P
   ;;  is true, in which case return NIL.
-  (DECLARE (VALUES (OR what-if-structure NULL)))
   (LET ((old-wis-list (GETF (window-plist table) :what-if-structures)) wis)
     (SETF wis (FIND-IF #'(lambda (wis)
 			   (AND (EQL (what-if-width wis) width)
@@ -266,13 +243,12 @@
     wis))
 
 
-;;;  ===========================================================================  ;;; 
+;;;  ===========================================================================  ;;;
 ;;;		         A Table's Constraint's Accessors			  ;;;
 ;;;  ===========================================================================  ;;;
 
 
 (defun table-row (member)
-  (declare (values (or null (integer 0 *))))
   (contact-constraint member :row))
 
 (defsetf table-row setf-table-row)
@@ -281,7 +257,6 @@
   (setf (contact-constraint member :row) row))
 
 (defun table-column (member)
-  (declare (values (or null (integer 0 *))))
   (contact-constraint member :column))
 
 (defsetf table-column setf-table-column)
@@ -292,9 +267,9 @@
 
 
 
-;;;  ===========================================================================  ;;; 
+;;;  ===========================================================================  ;;;
 ;;;		       SETF functions for a Table's Resources			  ;;;
-;;;  ===========================================================================  ;;; 
+;;;  ===========================================================================  ;;;
 
 (defmethod (setf display-left-margin) :after (new-value (table table))
   (declare (ignore new-value))
@@ -328,13 +303,13 @@
       (SETF column-alignment new-value)
       (force-relayout table)
       new-value))
-  
+
   (DEFMETHOD (SETF table-column-width) (new-value (table table))
     (with-slots (column-width) table
       (SETF column-width new-value)
       (force-relayout table)
       new-value))
-  
+
   (DEFMETHOD (SETF table-columns) (new-value (table table))
     (with-slots (columns) table
       (SETF columns new-value)
@@ -343,61 +318,61 @@
 	      (table-row kid) nil))
       (force-relayout table)
       new-value))
-  
+
   (DEFMETHOD (SETF table-delete-policy) (new-value (table table))
     (with-slots (delete-policy) table
       (SETF delete-policy new-value)
       (force-relayout table)
       new-value))
-  
+
   (DEFMETHOD (SETF table-layout-size-policy) (new-value (table table))
     (with-slots (layout-size-policy) table
       (SETF layout-size-policy new-value)
       (force-relayout table)
       new-value))
-  
+
   (DEFMETHOD (SETF table-row-height) (new-value (table table))
     (with-slots (row-height) table
       (SETF row-height new-value)
       (force-relayout table)
       new-value))
-  
+
   (DEFMETHOD (SETF table-row-alignment) (new-value (table table))
     (with-slots (row-alignment) table
       (SETF row-alignment new-value)
       (force-relayout table)
       new-value))
-  
+
   (DEFMETHOD (SETF table-same-width-in-column) (new-value (table table))
     (CHECK-TYPE new-value (MEMBER :on :off))
     (with-slots (same-width-in-column) table
       (SETF same-width-in-column new-value)
       (force-relayout table)
       new-value))
-  
+
   (DEFMETHOD (SETF table-same-height-in-row) (new-value (table table))
     (CHECK-TYPE new-value (MEMBER :on :off))
     (with-slots (same-height-in-row) table
       (SETF same-height-in-row new-value)
       (force-relayout table)
       new-value))
-  
-  
-;;;  ===========================================================================  ;;; 
+
+
+;;;  ===========================================================================  ;;;
 ;;;		         A Table's Separator Methods 			  	  ;;;
 ;;;  ===========================================================================  ;;;
-  
-;;;  Note: The physical size of an OL UI separator (white-space) will be defined 
+
+;;;  Note: The physical size of an OL UI separator (white-space) will be defined
 ;;;	   to be half the height of the row it follows.
-  
+
   (DEFMETHOD table-separator ((table table) row-number)
     (DECLARE (type integer row-number)
 	     (VALUES (MEMBER :on :off)))
     (check-type row-number (integer 0 *))
     (with-slots (separators) table
       (IF (MEMBER row-number separators) :on :off)))
-  
-  
+
+
   (DEFMETHOD (SETF table-separator) (on-or-off (table table) row-number)
     (DECLARE (type integer row-number)
 	     (VALUES (MEMBER :on :off)))
@@ -410,19 +385,18 @@
 		 (force-relayout table)))
 	  (:off (WHEN already-there-p
 		  (SETF separators (DELETE row-number separators))
-		  (force-relayout table))))))	
+		  (force-relayout table))))))
     on-or-off)
-  
-  
-  
-  
-;;;  ===========================================================================  ;;; 
+
+
+
+
+;;;  ===========================================================================  ;;;
 ;;;		         A Table's Table-Member Method 			  	  ;;;
 ;;;  ===========================================================================  ;;;
-  
+
   (DEFMETHOD table-member ((table table) row column)
     ;;  Return NIL if there is no child at position row/column.
-    (DECLARE (VALUES (OR contact NULL)))
     (LET ((wis (check-for-existing-wis table (contact-width table) (contact-height table)
 				       (contact-border-width table))))
       (WHEN wis
@@ -430,7 +404,7 @@
 				    (AND (= (org-entry-row x) row)
 					 (= (org-entry-column x) column)))
 				(REST (what-if-organization wis)))))))
-  
+
   (DEFMETHOD (SETF table-member) (new-value (table table) row column)
     ;;  What should we do with the child currently at position row/column?
     ;;  Set its constraints to NIL?  Set just one of its constraints to NIL?
@@ -447,9 +421,9 @@
 
 
 
-;;;  ===========================================================================  ;;; 
+;;;  ===========================================================================  ;;;
 ;;;		         A Table's Preferred-Size Method                          ;;;
-;;;  ===========================================================================  ;;; 
+;;;  ===========================================================================  ;;;
 
 (DEFMETHOD preferred-size ((table table) &key width height border-width)
 
@@ -462,9 +436,9 @@
 	(VALUES (+ (display-left-margin table) (display-right-margin table))
 		(+ (display-top-margin table) (display-bottom-margin table))
 		(contact-border-width table)))))
-    
-  
-  (with-slots ((old-width width) (old-height height) (old-border-width border-width)) table    
+
+
+  (with-slots ((old-width width) (old-height height) (old-border-width border-width)) table
 
     ;;
     ;;  When the caller specifies no what-if values and we have a good width & height, always
@@ -481,7 +455,7 @@
 	  height (OR height old-height)
 	  border-width (OR border-width old-border-width))
 
-    
+
     (LET ((wis (check-for-existing-wis table width height border-width)))
 
       (UNLESS (AND (what-if-organization wis)
@@ -494,16 +468,16 @@
 	      border-width))))
 
 
-;;;  ===========================================================================  ;;; 
+;;;  ===========================================================================  ;;;
 ;;;		         A Table's Change-Layout Method                           ;;;
-;;;  ===========================================================================  ;;; 
+;;;  ===========================================================================  ;;;
 
 (DEFMETHOD change-layout ((table table) &optional newly-managed)
   (declare (type (or null contact) newly-managed))
   (DECLARE (SPECIAL *called-from-resize-method*))
-  
+
   (with-slots (width height border-width) table
-    
+
     ;;  Just update the current wis if a single child is being withdrawn...
     (when (AND newly-managed (EQ (contact-state newly-managed) :withdrawn))
       (LET ((wis (check-for-existing-wis table width height border-width)))
@@ -511,35 +485,35 @@
 	  (SETF (REST (what-if-organization wis))
 		(DELETE newly-managed (REST (what-if-organization wis))
 			:key #'org-entry-kid)))))
-    
+
     (LET (p-width p-height
 	  (wis (check-for-existing-wis table width height border-width)))
       ;;  With a change in layout we must really re-layout our children...
       (unless (what-if-in-use wis)
 	(SETF (what-if-in-use wis) t)
 	(place-children-physically table wis t)
-	
+
 	;;
 	;;  Update the children's row/column constraints...
 	;;
 	(DOLIST (o-e (REST (what-if-organization wis)))
 	  (SETF (table-row (org-entry-kid o-e)) (org-entry-row o-e)
 		(table-column (org-entry-kid o-e)) (org-entry-column o-e)))
-	
+
 	(UNLESS (AND (BOUNDP '*called-from-resize-method*) *called-from-resize-method*)
 	  (SETF p-width (what-if-preferred-width wis)
-		p-height (what-if-preferred-height wis))     
-	  
+		p-height (what-if-preferred-height wis))
+
 	  (UNLESS (AND (= height p-height) (= width p-width))
 	    (SETF (what-if-width wis) p-width
-		  (what-if-height wis) p-height)	      
+		  (what-if-height wis) p-height)
 	    (change-geometry table :width p-width :height p-height :accept-p t)))
 	(SETF (what-if-in-use wis) nil)))))
 
 
-;;;  ===========================================================================  ;;; 
+;;;  ===========================================================================  ;;;
 ;;;		         A Table's Resize :after Method                           ;;;
-;;;  ===========================================================================  ;;; 
+;;;  ===========================================================================  ;;;
 
 (DEFMETHOD resize :after ((table table) width height b-width)
   (DECLARE (IGNORE  width height b-width))
@@ -549,11 +523,11 @@
 
 
 						
-;;;  ===========================================================================  ;;; 
+;;;  ===========================================================================  ;;;
 ;;;		         A Table's Manage-Geometry Method                         ;;;
-;;;  ===========================================================================  ;;; 
+;;;  ===========================================================================  ;;;
 
-;;;  This is not right yet.  It should run a what-if to get a Table size for the child's 
+;;;  This is not right yet.  It should run a what-if to get a Table size for the child's
 ;;;  size change, but this is not possible yet -- the wis doesn't keep all children's
 ;;;  sizes.  Then it must call change-geometry to see if its parent will let it be that
 ;;;  size.  If so, it should return a thunk that invokes resize, not change-geometry.
@@ -587,8 +561,8 @@
 
 ;;;
 ;;;   Internal routines that calculate the width/height of a table, given a What-if-Structure...
-;;;		Calculate-Preferred-Width 
-;;;		Calculate-Preferred-Height 
+;;;		Calculate-Preferred-Width
+;;;		Calculate-Preferred-Height
 
 (DEFUN calculate-preferred-width (table wis)
   (LET* ((ncolumns (what-if-ncolumns wis))
@@ -617,31 +591,31 @@
 
 	(MULTIPLE-VALUE-SETQ (height-for-this-row fixed-row-heights org-list)
 	  (determine-a-rows-height row fixed-row-heights org-list))
-	
+
 	(INCF table-height height-for-this-row)
 
-	;;  Note:  The physical size of an OL UI separator (white-space) will be defined 
+	;;  Note:  The physical size of an OL UI separator (white-space) will be defined
 	;;	   to be half the height of the row it follows.  A separator placed after
 	;;	   the last row will result in extra white-space at the bottom of the table.
 	(WHEN (MEMBER row separators)
 	  (INCF table-height (FLOOR (+ height-for-this-row (display-vertical-space table)) 2))))
-      
+
       table-height)))
 
 
 (DEFUN determine-a-rows-height (row fixed-row-heights org-list1)
   (LET (fixed-height-for-this-row (height-for-this-row 0) found-a-kid-in-this-row-p)
-    
+
     (TYPECASE fixed-row-heights
       (integer
        (SETF fixed-height-for-this-row fixed-row-heights))
       (cons
        (SETF fixed-height-for-this-row (FIRST fixed-row-heights))
        (SETF fixed-row-heights (REST fixed-row-heights))))
-    
+
     (IF fixed-height-for-this-row
 	(SETF height-for-this-row fixed-height-for-this-row)
-	
+
 	;;else find the tallest element and the largest border width in this row...
 	(progn
 	  (DO ((org-list1 org-list1 (REST org-list1))
@@ -668,17 +642,17 @@
 
 
 
-;;;  ===========================================================================  ;;; 
+;;;  ===========================================================================  ;;;
 ;;;	          The Guts of Table: Place-Children-Physically			  ;;;
-;;;  ===========================================================================  ;;; 
+;;;  ===========================================================================  ;;;
 
-(DEFUN place-children-physically (table wis really-p)  
-  
+(DEFUN place-children-physically (table wis really-p)
+
   (with-slots (children same-width-in-column same-height-in-row columns
 			column-alignment row-alignment
 			column-width row-height
 			separators) (THE table table)
-    
+
     (LET (kid last-kid-processed height-for-this-row x1 y1
 	  (fixed-row-heights (UNLESS (EQ row-height :maximum) row-height))
 	  fixed-column-widths
@@ -702,13 +676,13 @@
 	 ;; XtNmaximumColumns.
 	 ;; Must scan the kids to figure out what width each column should be.
 	 (put-kids-into-maximum-aligned-columns table wis))
-	
+
 	(otherwise
 	 (UNLESS (INTEGERP columns)
 	   (ERROR "~s is not a legal value for :columns" columns))
 	 ;; XtNrequestedColumns.
 	 (put-kids-into-specified-number-of-columns table wis)))
-      
+
       ;;
       ;;  Position the children on the test sheet per the columnarization...
       ;;
@@ -722,14 +696,14 @@
 	  (CATCH 'out-of-kids
 	    (DOTIMES (row (what-if-nrows wis))
 	      (SETF fixed-column-widths (UNLESS (EQ column-width :maximum) column-width))
-	      
+
 	      (MULTIPLE-VALUE-SETQ (height-for-this-row fixed-row-heights)
 		(determine-a-rows-height row fixed-row-heights org-list))
-	      
+
 	      (LET ((fixed-width-for-this-column
 		      (AND (INTEGERP fixed-column-widths) fixed-column-widths))
 		    (x (display-left-margin table)))
-		
+
 		;;  Now set the row's elements' geometries...
 		(DOTIMES (column (what-if-ncolumns wis))
 		  (WHEN (EQ kid last-kid-processed)
@@ -739,20 +713,20 @@
 		    (SETF kid (org-entry-kid org-entry)
 			  kids-row (org-entry-row org-entry)
 			  kids-column (org-entry-column org-entry)))
-		  
+
 		  ;;  Figure out what width WE want this column to be...
 		  (WHEN (CONSP fixed-column-widths)
 		    (SETF fixed-width-for-this-column (FIRST fixed-column-widths)))
 		  (SETF width-for-this-column
 			(OR fixed-width-for-this-column (AREF column-widths column 0)))
-		  (WHEN (AND (= row kids-row) (= column kids-column))		      
+		  (WHEN (AND (= row kids-row) (= column kids-column))
 		    (SETF childs-horizontal-size (+ (org-entry-width org-entry)
 						    (org-entry-border-width org-entry)
 						    (org-entry-border-width org-entry))
 			  childs-vertical-size (+ (org-entry-height org-entry)
 						  (org-entry-border-width org-entry)
 						  (org-entry-border-width org-entry)))
-		    
+
 		    (IF (EQ same-width-in-column :on)
 			(SETF childs-horizontal-size width-for-this-column
 			      x1 x)
@@ -765,7 +739,7 @@
 						 childs-horizontal-size)))
 				 (:center (+ x (FLOOR (- width-for-this-column
 							 childs-horizontal-size) 2))))))
-		    
+
 		    (IF (EQ same-height-in-row :on)
 			(SETF childs-vertical-size height-for-this-row
 			      y1 y)
@@ -778,7 +752,7 @@
 						  childs-vertical-size)))
 				 (:center (+ y (FLOOR (- height-for-this-row
 							 childs-vertical-size) 2))))))
-		    
+
 		    ;;
 		    ;;   Reposition and/or resize the child iff needed...
 		    ;;
@@ -803,7 +777,7 @@
 		      ;;   Done with this child, move on to the next...
 		      ;;
 		      (SETF org-list (REST org-list))
-		      (SETF last-kid-processed kid)))	  
+		      (SETF last-kid-processed kid)))
 
 		    ;;
 		    ;;   Whether or not a kid was placed at this row/column, move on to the
@@ -812,7 +786,7 @@
 			       (display-horizontal-space table)))
 		    (WHEN (CONSP fixed-column-widths)
 		      (SETF fixed-column-widths (REST fixed-column-widths))))
-		    
+
 		;;
 		;;   Get vertical position of top of borders of next row's elements...
 		;;
@@ -822,7 +796,7 @@
 		  (INCF y (FLOOR (+ height-for-this-row
 				    (display-vertical-space table)) 2))))))
 	  ))
-	
+
 	;;
 	;;   Having finished placing the kids we can put our preferred size into our wis...
 	;;
@@ -830,13 +804,13 @@
 	    (what-if-preferred-width wis) (calculate-preferred-width table wis))
 	)))
 
-    
-  
+
+
 (DEFUN scan-for-largest-children (wis)
-  
+
   (LET* ((max-child-heights-by-row (MAKE-ARRAY (what-if-nrows wis) :initial-element 0))
 	 (max-child-widths-by-column (MAKE-ARRAY (what-if-ncolumns wis) :initial-element 0)))
-    
+
     (DOLIST (org-entry (REST (what-if-organization wis)))
       (LET ((row (org-entry-row org-entry))
 	    (column (org-entry-column org-entry))
@@ -850,17 +824,14 @@
 	      (MAX (SVREF max-child-heights-by-row row) total-child-height))
 	(SETF (SVREF max-child-widths-by-column column)
 	      (MAX (SVREF max-child-widths-by-column column) total-child-width))))
-    
+
     (VALUES max-child-heights-by-row max-child-widths-by-column)))
 
 
 
 (DEFUN put-kids-into-specified-number-of-columns (table wis)
-
-  (DECLARE (VALUES widths-for-columns))
-  
   (with-slots (column-width columns children) (THE table table)
-    (LET* (fixed-width-for-this-column total-kid-width 
+    (LET* (fixed-width-for-this-column total-kid-width
 	   (fixed-widths-for-columns column-width))
 
       (SETF (what-if-ncolumns wis) 	 columns
@@ -892,7 +863,7 @@
 				 (org-entry-border-width org-entry1)))
 	(Setf (AREF (what-if-column-widths wis) kid1s-column 1)
 	      (MAX (AREF (what-if-column-widths wis) kid1s-column 1) total-kid-width)))
-      
+
 
       ;;
       ;;  Now go through the columns looking for those with pre-set widths.  Use any pre-set
@@ -901,7 +872,7 @@
       (SETF fixed-widths-for-columns column-width)
       (DOTIMES (current-column (what-if-ncolumns wis))
 	;;  Get current-column's fixed width, if any...
-	(SETF fixed-width-for-this-column 
+	(SETF fixed-width-for-this-column
 	      (TYPECASE fixed-widths-for-columns
 		(integer fixed-widths-for-columns)
 		(CONS (PROG1 (FIRST fixed-widths-for-columns)
@@ -918,21 +889,21 @@
 (DEFUN put-kids-into-maximum-unaligned-columns (table wis really-p)
 
   (with-slots (children same-width-in-column) (THE table table)
-      
+
     (LET* ((org-list (LIST nil))
 	   (working-width (what-if-width wis))
 	   (border-width (what-if-border-width wis)))
-      
+
       (WHEN (ZEROP working-width)
 	  (SETF working-width (- (find-first-parents-width table) border-width border-width)))
-      
+
       ;;  Start by sorting the list of children by their row/column constraints.  Once this is
       ;;  done we ignore the constraints from here on for :none layout policy...
       (LET ((nkids (LENGTH children)))
 	(SETF (what-if-nrows wis) nkids
 	      (what-if-ncolumns wis) nkids)
 	(assign-kids-to-rows-and-columns table wis))
-      
+
       (LET ((next-x-pos (display-left-margin table))
 	    (next-y-pos (display-top-margin table))
 	    (largest-height-this-row 0)
@@ -940,7 +911,7 @@
 	    (ncolumns-in-table 0)
 	    (nrows-in-table 0)
 	    (preferred-width-of-table 0))
-	
+
 	(FLET
 	  ((handle-the-end-of-a-row ()
 	     (SETF ncolumns-in-table (MAX ncolumns-in-table columns-this-row))
@@ -956,14 +927,14 @@
 	     (SETF columns-this-row 0
 		   largest-height-this-row 0))
 	   )
-	  
+
 	  (DOLIST (child children)
 	    (UNLESS (EQ (contact-state child) :withdrawn)
 	      (MULTIPLE-VALUE-BIND (childs-p-width childs-p-height childs-p-border-width)
 		  (preferred-size child)
 		(LET ((childs-total-width (+ childs-p-width (* 2  childs-p-border-width)))
 		      (childs-total-height (+ childs-p-height (* 2  childs-p-border-width))))
-		  
+
 		  ;;
 		  ;;  If cannot place this child at the end of this row, finish off this row and move
 		  ;;  on to the next row...
@@ -983,7 +954,7 @@
 				   (= childs-p-height (contact-height child))
 				   (= childs-p-border-width (contact-border-width child)))
 			(resize child childs-p-width childs-p-height childs-p-border-width))))
-		  
+
 		  ;;
 		  ;;  Done with this child, move on to the next child and the next position in this
 		  ;;  row...
@@ -1015,7 +986,7 @@
 	  ;;
 	  (SETF (what-if-column-widths wis)
 		(MAKE-ARRAY `(,ncolumns-in-table 2) :initial-element 0))
-	  
+
 	  (SETF (AREF (what-if-column-widths wis) 0 0) (what-if-preferred-width wis)))))))
 
 
@@ -1030,22 +1001,20 @@
   ;; fit.  If so, do it.  If not, we must reduce the number of columns by one, assigning them
   ;; equal widths, then start the layout process from the top.  Each time we try to place a child
   ;; in the first column, increment NROWS.
-  
+
   ;; Note that while this routine tends to give about the same amount of space to each column,
   ;; the slack space for the columns may differ considerably.  After we find a child the cannot
   ;; fit in a column and reduce the number of columns to get more space, we give each column the
   ;; same, new, enlarged space.  If one column is actually fairly narrow and doesn't need more
   ;; space it'll end up with extra slack space around it.  A slack-space-smoothing routine should
   ;; be written to improve this.
-  
-  (DECLARE (VALUES nrows ncolumns column-widths))
-  
+
   (with-slots (children column-width) (THE table table)
-    
+
       (LET ((nkids (LENGTH children))
 	    (working-width (what-if-width wis))
 	    (working-border-width (what-if-border-width wis)))
-	
+
 	(WHEN (<= working-width 0)
 	  (SETF working-width (- (find-first-parents-width table)
 				 working-border-width working-border-width)))
@@ -1057,13 +1026,13 @@
 	(SETF (what-if-nrows wis) nkids
 	      (what-if-ncolumns wis) nkids)
 	(assign-kids-to-rows-and-columns table wis)
-	
-	
+
+
 	;;  Start with an upper bound on the number of columns...
 	(LET* ((ncolumns (MIN nkids (get-maximum-possible-ncolumns table working-width)))
 	       (column-widths (MAKE-ARRAY `(,ncolumns 2)))
 	       (column-widths-vector (MAKE-ARRAY (* 2 ncolumns) :displaced-to column-widths)))
-					    
+
 
 	  ;;
 	  ;;  Each execution of this outer loop represents an attempt at fitting the children
@@ -1084,18 +1053,18 @@
 		   (IF (ZEROP (AREF column-widths column 1))
 		       (DECF ncolumns)
 		       (SETF (AREF column-widths column 0) (AREF column-widths column 1))))
-		 
+
 		 (SETF (what-if-column-widths wis) column-widths)
 		 (SETF (what-if-ncolumns wis) ncolumns)
 		 (SETF (what-if-organization wis) org-list)
 		 (SETF (what-if-nrows wis) (1+ next-row)))
-	       
+
 	    ;;  Initialize the first ncolumns elements of the column-widths array...
 	    ;;  Total horizontal space available for the columns:
 	    ;;  	width - right-margin - left-margin - (n - 1)*horizontal-space.
 	    ;;  This total is divided into ncolumns equal chunks, with any extra white space
 	    ;;  being given a pixel at a time to the left-most columns.
-	    
+
 	    ;;  But not quite.  We need to handle fixed-width columns specially.  At this point
 	    ;;  we know how many columns we're (tentatively) giving the table, call it N.  We
 	    ;;  need to see how much of our space is occupied by fixed-width columns in the
@@ -1111,7 +1080,7 @@
 
 	      ;;  Forget the column widths calculated last time through the loop...
 	      (FILL (THE vector column-widths-vector) nil)
-	      
+
 	      ;;  Calculate how much of the total table width is allocated to fixed-width
 	      ;;  columns...
 	      (COND
@@ -1135,12 +1104,12 @@
 		     (SETF (AREF column-widths column-number 0)
 			   (SETF (AREF column-widths column-number 1) fixed-width)))))
 		(t (ERROR "column-width is ~a." fixed-column-widths)))
-	      
+
 	      ;;  Now n-fixed-width-columns = # of fixed width columns in first ncolumns
 	      ;;      total-fixed-width     = # of pixels occupied by those columns
 	      ;;  and for each fixed-width column both column-widths entries = the fixed width.
 
-	      ;;  Take the remaining space and give it to the non-fixed-width columns...	      
+	      ;;  Take the remaining space and give it to the non-fixed-width columns...
 	      (UNLESS  (ZEROP (- ncolumns n-fixed-width-columns))
 		(MULTIPLE-VALUE-BIND (horizontal-space-for-each-var-column extra-white-space)
 		    (FLOOR (- working-width
@@ -1149,7 +1118,7 @@
 			      (* (1- ncolumns) (display-horizontal-space table))
 			      total-fixed-width)
 			   (- ncolumns n-fixed-width-columns))
-		  
+
 		  ;;  Assign the non-fixed-width space to the non-fixed-width columns.  Because
 		  ;;  we FILL column-widths with NIL each time through the main loop, only
 		  ;;  fixed-width columns will have none-NIL values in them.  Give the extra
@@ -1163,17 +1132,17 @@
 				   (PROGN (DECF extra-white-space) 1))))
 		      (SETF (AREF column-widths i 1) 0)))))
 
-	       
+
 	       (SETF org-list (LIST nil)
 		     org-tail org-list
 		     next-row -1
 		     next-column (1- ncolumns))
-	       
+
 	       ;;
 	       ;;  Try to lay the children into the columns sized as they are now...
 	       ;;
 	       (DOLIST (child children (SETF finished t))
-		 
+
 		 (UNLESS (EQ (contact-state child) :withdrawn)
 		   ;;
 		   ;;  If the column this child's to go in is beyond ncolumns, wrap to the first
@@ -1184,23 +1153,23 @@
 		     (SETF next-column 0)
 		     (INCF next-row)
 		     (SETF fixed-column-widths (UNLESS (EQ column-width :maximum) column-width)))
-		   
+
 		   (LET* ((columns-width-right-now (AREF column-widths next-column 0))
 			  (fixed-width-for-this-column
 			    (IF (LISTP fixed-column-widths)      ;; ERCM
 				(FIRST fixed-column-widths)
 				fixed-column-widths)))
 
-		     (UNLESS fixed-width-for-this-column			
+		     (UNLESS fixed-width-for-this-column
 			;;  Find out what width the child thinks he should be...
 			(MULTIPLE-VALUE-BIND (childs-width childs-height childs-border-width)
 			    (preferred-size child :width columns-width-right-now)
 			  (DECLARE (IGNORE childs-height))
-			  
+
 			  ;;  Calculate how much horizontal space this child needs...
 			  (LET ((horizontal-space-for-this-child
 				  (+ childs-width childs-border-width childs-border-width)))
-			    
+
 			    (COND
 			      ((OR (<= horizontal-space-for-this-child columns-width-right-now)
 				   (adjust-column-widths-so-child-fits
@@ -1209,7 +1178,7 @@
 			       (SETF (AREF column-widths next-column 1)
 				     (MAX (AREF column-widths next-column 1)
 					  horizontal-space-for-this-child)))
-			      (t			   
+			      (t
 			       ;; else child can't fit in this column.  Reduce the number of
 			       ;; columns and try again.
 			       (DECF ncolumns)
@@ -1220,7 +1189,7 @@
 		   (SETF (REST org-tail)
 			 (LIST (establish-org-entry child next-row next-column)))
 		   (SETF org-tail (REST org-tail))
-		   
+
 		   ;;  Advance to the next column's entry in the fixed-width list if there is
 		   ;;  one...
 		   (WHEN (CONSP fixed-column-widths)
@@ -1228,12 +1197,12 @@
 
 
 (DEFUN adjust-column-widths-so-child-fits (column-widths childs-width next-column ncolumns)
-  
+
   (DO ((npixels-needed (- childs-width (AREF column-widths next-column 0))))
       ((ZEROP npixels-needed)
        (SETF (AREF column-widths next-column 0) childs-width)
        t)
-    
+
     ;; Find column with greatest slack, if any...
     (LET ((max-slack 0) (max-slack-col nil))
       (DOTIMES (col ncolumns)
@@ -1242,7 +1211,7 @@
 	    (WHEN (> slack max-slack)
 	      (SETF max-slack slack
 		    max-slack-col col)))))
-      
+
       ;;  If no column had any slack, return NIL...
       (UNLESS max-slack-col (RETURN nil))
 
@@ -1256,7 +1225,7 @@
 (DEFUN get-maximum-possible-ncolumns (table width)
   "Returns the maximum number of columns possible given the specified constraints."
   (with-slots (children column-width) (THE table table)
-    
+
     (LET* ((fixed-column-widths (UNLESS (EQ column-width :maximum) column-width))
 	   (minimum-column-width
 	     (- width (display-left-margin table) (display-right-margin table))))
@@ -1278,7 +1247,7 @@
 	      (WHEN this-fixed-column-width
 		(SETF minimum-column-width
 		      (MIN minimum-column-width this-fixed-column-width)))))
-	  
+
 	  ;;
 	  ;;  Then as a crude approximation, find the narrowest child, not knowing what column
 	  ;;  the child will go in...
@@ -1291,7 +1260,7 @@
 		(SETF minimum-column-width
 		      (MIN minimum-column-width
 			   (+ preferred-width preferred-border-width preferred-border-width))))))))
-      
+
       ;;  Now that we have the smallest column width we could ever get, calculate and return the
       ;;  maximum number of columns we could ever have...
       (MIN (LENGTH children)
@@ -1324,15 +1293,15 @@
 
 (DEFUN assign-kids-to-rows-and-columns (table wis)
   (LET (hole-pointer hole-row hole-column ncolumns nrows)
-    
-    
+
+
     (DECLARE (inline insert-into-organization-list))
     (LABELS
       (
        ;;
        ;;   Makes sure the hole-pointer/row/column actually point at a hole.  If they currently
        ;;   point at an allocated table row/column, moves them over until they point at an
-       ;;   unallocated one. 
+       ;;   unallocated one.
        ;;
        (find-next-hole
 	 ()
@@ -1354,7 +1323,7 @@
 		     (/= org-row hole-row)	; There's space between the previous org-entry
 		     (/= org-column hole-column))	;    and this one.  Leave hole pointing
 						;    at row/col one beyond the previous
-						;    org-entry. 
+						;    org-entry.
 	     (RETURN))
 	   ;;
 	   ;;   The row/column position of the hole is occupied.  Move the row/column of the hole
@@ -1372,10 +1341,10 @@
 	 (RPLACD insertion-point
 		 (CONS (establish-org-entry kid row column)
 		       (REST insertion-point)))
-	 (find-next-hole)	 
+	 (find-next-hole)
 	 (WHEN (>= row nrows)			; Update nrows if necessary.
 	   (SETF nrows (1+ row))))		;   *
-       
+
        ;;
        ;;   Inserts a kid with no constraints in the next hole, moves the hole pointers.  Always
        ;;   successful, so always returns T.
@@ -1384,7 +1353,7 @@
 	 (kid)
 	 (insert-into-organization-list kid hole-pointer hole-row hole-column)
 	 t)
-       
+
        ;;
        ;;   Tries to insert a kid into a specific row/column, returning T if successful, NIL if
        ;;   not.  Fails if that row/column is already occupied or specified column is outside
@@ -1392,7 +1361,7 @@
        ;;
        (place-a-kid-at-a-specific-row-and-column
 	 (kid kid-row kid-column)
-	 
+
 	 (LET ((kid-position (+ (* ncolumns kid-row) kid-column))
 	       (last-occupied-position
 		 (IF (FIRST hole-pointer)
@@ -1402,20 +1371,20 @@
 	   (WHEN (OR (>= kid-column ncolumns)
 		     (>= last-occupied-position kid-position))
 	     (RETURN-FROM place-a-kid-at-a-specific-row-and-column nil))
-	   
-	   
+
+
 	   (DO ((org-list hole-pointer) insertion-point org-position)
 	       (nil)
-	     
+
 	     (SETF insertion-point org-list
 		   org-list (REST org-list))
-	     
+
 	     (SETF org-position
 		   (IF org-list
 		       (+ (* ncolumns (org-entry-row (FIRST org-list)))
 			  (org-entry-column (FIRST org-list)))
 		       (1+ kid-position)))
-	     
+
 	     (COND
 	       ((= org-position kid-position)	; Kid's row/column occupied: failure.
 		(RETURN-FROM place-a-kid-at-a-specific-row-and-column nil))
@@ -1423,7 +1392,7 @@
 		(insert-into-organization-list kid insertion-point kid-row kid-column)
 		(RETURN-FROM place-a-kid-at-a-specific-row-and-column t))
 	       (t nil)))))
-       
+
        ;;
        ;;   Tries to insert a kid into a specific row.
        ;;   Fails if row is full, returns NIL, otherwise is successful, returns T.
@@ -1433,7 +1402,7 @@
 
 	 (WHEN (< kid-row hole-row)
 	   (RETURN-FROM place-a-kid-in-a-specific-row nil))
-	 
+
 	 (DO ((org-list hole-pointer) insertion-point
 	      (last-occupied-column
 		(IF (FIRST hole-pointer) (org-entry-column (FIRST hole-pointer)) -1) org-column)
@@ -1450,7 +1419,7 @@
 		     org-column (org-entry-column org-entry))
 	     ;; else no more org-entries so fake one way out there...
 	     (SETF org-row (1+ kid-row)))
-	   
+
 	   (WHEN (OR (AND (= org-row kid-row)	        ; In kid's row and there's a hole.
 			  (< (1+ last-occupied-column)	;   *
 			     org-column))		;   *
@@ -1460,7 +1429,7 @@
 	     (insert-into-organization-list
 	       kid insertion-point kid-row (1+ last-occupied-column))
 	     (RETURN-FROM place-a-kid-in-a-specific-row t))))
-       
+
        ;;
        ;;   Inserts a kid into a specific column.
        ;;   Fails if column is not within ncolumns, returns NIL, otherwise always successful,
@@ -1468,26 +1437,26 @@
        ;;
        (place-a-kid-in-a-specific-column
 	 (kid kids-column)
-	 	   
+
 	 (WHEN (>= kids-column ncolumns)
 	   (RETURN-FROM place-a-kid-in-a-specific-column nil))
-	 
+
 	 (DO* ((org-list hole-pointer) insertion-point
 	       (last-org-position -1 org-position) org-position
 	       (insertion-row (IF (< kids-column hole-column) (1+ hole-row) hole-row))
 	       (position-of-next-occurrence-of-kids-column
 		 (+ (* ncolumns insertion-row) kids-column)))
 	      (nil)
-	   
+
 	   (SETF insertion-point org-list
 		 org-list (REST org-list))
-	   
+
 	   (SETF org-position
 		 (IF org-list
 		     (+ (* ncolumns (org-entry-row (FIRST org-list)))
 			(org-entry-column (FIRST org-list)))
 		     (1+ position-of-next-occurrence-of-kids-column)))
-	   
+
 	   (WHEN (< last-org-position
 		    position-of-next-occurrence-of-kids-column
 		    org-position)
@@ -1498,7 +1467,7 @@
 	   (WHEN (>= org-position position-of-next-occurrence-of-kids-column)
 	     (INCF position-of-next-occurrence-of-kids-column ncolumns)
 	     (INCF insertion-row))))
-       
+
        ;;
        ;;  This is called by assign-kids-to-rows-and-columns when it realizes it is dealing with
        ;;  a :maximum or :none table.  The Table's children list is rebuilt to be
@@ -1514,18 +1483,18 @@
 	   (LET* ((sorted-children-list (MAKE-LIST (LENGTH org-list)))	; includes leading NIL.
 		  (next-sorted-children-list sorted-children-list)
 		  (last-sorted-children-list sorted-children-list))
-	     
+
 	     (DOLIST (org-entry (REST org-list))
 	       (SETF last-sorted-children-list next-sorted-children-list
 		     next-sorted-children-list (REST next-sorted-children-list))
 	       (RPLACA next-sorted-children-list (org-entry-kid org-entry)))
-	     
+
 	     (WHEN free-list
 	       (RPLACD last-sorted-children-list (NCONC free-list withdrawn-children)))
 	     (SETF children (REST sorted-children-list)))))
 
        )					; ...end of labels...
-      
+
       ;; ====================================================================================
       ;;   The code for assign-kids-to-rows-and-columns (table wis):
       ;;   Constructs the what-if-organization list by assigning each kid to a specific
@@ -1568,27 +1537,27 @@
 		    (PUSH kid free)))))
 	      (t
 	       (PUSH kid withdrawn-children))))
-	  
+
 	  ;;  Now try to place all the kids specifying only a column.  Since it is always OK to
 	  ;;  create a new row, such kids can always be placed...
 	  (DOLIST (kid-and-column (NREVERSE free-row))
 	    (place-a-kid-in-a-specific-column (FIRST kid-and-column) (SECOND kid-and-column)))
-	  
+
 	  ;;  Now try to place all the kids specifying only a row.  If that row is full, place
 	  ;;  the child on the free list...
 	  (DOLIST (kid-and-row (NREVERSE free-col))
 	    (UNLESS (place-a-kid-in-a-specific-row (FIRST kid-and-row) (SECOND kid-and-row))
 	      (PUSH (FIRST kid-and-row) free)))
-	  
+
 	  ;;  Finally, place the kids that are on the free list.  These kids have no constraints,
 	  ;;  so they'll all be placed in holes scanning from top-left to bottom-right or new
 	  ;;  rows will be created to hold them...
 	  (IF (SYMBOLP (table-columns table))
 	      (build-sorted-list-of-children
 		table (what-if-organization wis) (NREVERSE free) withdrawn-children)
-	      
+
 	      ;; else...
-	      (PROGN 
+	      (PROGN
 		(DOLIST (kid (NREVERSE free))
 		  (place-a-kid-at-any-row-and-column kid))
 		;;
@@ -1602,7 +1571,7 @@
 		       (RPLACA children withdrawn-child)
 		       (SETF children (REST children))))
 		  (RPLACA children (org-entry-kid (FIRST organization))))))
-	  
+
 	  (SETF (what-if-nrows wis) nrows))))))
 
 ;;  This is called by assign-kids-to-rows-and-columns when it realizes it is dealing with a
@@ -1617,12 +1586,12 @@
     (LET* ((sorted-children-list (MAKE-LIST (LENGTH org-list)))	; includes leading NIL.
 	   (next-sorted-children-list sorted-children-list)
 	   (last-sorted-children-list sorted-children-list))
-      
+
       (DOLIST (org-entry (REST org-list))
 	(SETF last-sorted-children-list next-sorted-children-list
 	      next-sorted-children-list (REST next-sorted-children-list))
 	(RPLACA next-sorted-children-list (org-entry-kid org-entry)))
-      
+
       (WHEN free-list
 	(RPLACD last-sorted-children-list (NCONC free-list withdrawn-children)))
       (SETF children (REST sorted-children-list)))))

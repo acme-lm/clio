@@ -18,16 +18,8 @@
 ;;;                                                                                  |
 ;;;----------------------------------------------------------------------------------+
 
-(in-package "CLIO-OPEN")
 
-(export '(
-	  command-frame
-	  command-frame-content
-	  command-frame-controls
-	  make-command-frame
-	  )
-	'clio-open)
-
+(in-package :clio-example)
 
 (defcontact command-frame (core core-shell top-level-session)
   ()
@@ -40,14 +32,14 @@
 (defmethod initialize-instance :after ((command-frame command-frame)
 				       &rest initargs &key content controls)
   (with-slots (width height) command-frame
-    
+
     ;; Initialize command-frame-form
     (assert content () "No content defined for ~a." command-frame)
     (multiple-value-bind (content-constructor content-initargs)
 	(etypecase content
 	  (function content)
 	  (list (values (first content) (rest content))))
-	
+
       (let*
 	((content-name     (or (getf content-initargs :name) :content))
 	 (hlinks           `((
@@ -98,17 +90,17 @@
 			     :height           height
 			     :horizontal-links hlinks
 			     :vertical-links   vlinks)))
-	
-	;; Initialize content 
+
+	;; Initialize content
 	(apply content-constructor
 	       :name       content-name
 	       :parent     form
 	       :max-height :infinite
 	       :min-height 0
 	       :max-width  :infinite
-	       :min-width  0	     		 
+	       :min-width  0
 	       content-initargs)
-	
+
 	;; Initialize controls area
 	(multiple-value-bind (controls-constructor controls-initargs)
 	    (etypecase controls
@@ -116,7 +108,7 @@
 	       (let ((space (point-pixels
 			      (contact-screen command-frame)
 			      (getf *dialog-point-spacing* (contact-scale command-frame)))))
-		 (values 'make-table 
+		 (values 'make-table
 			 `(
 			   :columns              :maximum
 			   :column-alignment     :center
@@ -126,12 +118,12 @@
 			   :right-margin         ,space
 			   :top-margin           ,(pixel-round space 2)
 			   :bottom-margin        ,(pixel-round space 2)))))
-	      
+
 	      (function controls)
-	      
+
 	      (list (values (first controls) (rest controls))))
-	  
-	  (apply controls-constructor 
+
+	  (apply controls-constructor
 		 :parent       form
 		 :name         :controls
 		 :border-width 0

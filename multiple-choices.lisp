@@ -18,28 +18,19 @@
 ;;;                                                                                  |
 ;;;----------------------------------------------------------------------------------+
 
-(in-package "CLIO-OPEN")
+(in-package :clio-open)
 
-(EXPORT '(
-	  choice-default
-	  choice-font
-	  choice-selection
-	  make-multiple-choices
-	  multiple-choices
-	  ))
-
-
 ;;;  ============================================================================
 ;;;	     T h e   M U L T I P L E   -   C H O I C E S   C o n t a c t
 ;;;  ============================================================================
 
 (DEFCONTACT multiple-choices (table)
-  
+
   ((font 	:type 		fontable
 	 	:reader 	choice-font
 		:initarg	:font
 	 	:initform 	nil)
-    
+
    (selection   :type           list
                 :accessor       choice-selection
                 :initform       nil)
@@ -49,7 +40,7 @@
 		:initarg	:default-selection
 		:initform	nil)
    )
-  
+
   (:resources
     font default
     (horizontal-space :initform 3)
@@ -62,7 +53,6 @@ where N >= M >= 0."))
 
 
 (DEFUN make-multiple-choices (&rest initargs &key &allow-other-keys)
-  (DECLARE (VALUES multiple-choices))
   (APPLY #'make-contact 'multiple-choices initargs))
 
 
@@ -170,7 +160,7 @@ where N >= M >= 0."))
 		NIL
 		"New default choice-items ~a are not children of ~a."
 		(set-difference new-defaults children) choices)
-	
+
 	(DOLIST (item new-defaults)
 	  (SETF (choice-item-highlight-default-p item) T))
 	(DOLIST (item no-longer-defaults)
@@ -186,13 +176,11 @@ where N >= M >= 0."))
 (DEFMETHOD (SETF choice-selection) (children-to-be-selected (choices multiple-choices))
 
   (DECLARE (TYPE list children-to-be-selected))
-  (DECLARE (VALUES children-to-be-selected))
-  
   (with-slots (children selection) choices
     (let
       ((new-selections (set-difference children-to-be-selected selection))
        (no-longer-selected (set-difference selection children-to-be-selected)))
-    
+
     ;;  Make sure the caller's selection are indeed a children of ours...
     (ASSERT (subsetp new-selections children)
 	    NIL
@@ -212,7 +200,7 @@ where N >= M >= 0."))
 ;;;
 
 (DEFMETHOD (SETF choice-font) (new-value (multiple-choices multiple-choices))
-  
+
   (with-slots (children font) multiple-choices
     (if new-value
 	(progn

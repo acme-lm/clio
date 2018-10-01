@@ -26,16 +26,6 @@
 
 (in-package "CLIO-OPEN")
 
-(export '(
-	  dialog-button
-	  dialog-item
-	  make-dialog-item
-	  make-dialog-button
-	  button-dialog
-	  present-dialog			; As good a place as any.
-	  )
-	'clio-open)
-
 
 ;;;
 ;;;  Contact definitions and interface functions.
@@ -263,49 +253,43 @@ to bring up a submenu.")
 	       contact
 	       ancestor)))))
 
-
-;;;
 ;;;  Action functions for dialog-button and dialog-item.
 
 ;;  Present-dialog methods for other dialogs are in their respective files.
 ;;  This method starts the menu protocol defined below in the event handlers,
 ;;  and sets position according to the complicated Open Look rules.
 (defmethod present-dialog ((menu menu) &key x y button state)
-   (declare (type (or card16 null) x y))
-   (declare (ignore x y))			; Stick to Open Look positioning rules.
-   (check-type button (or (member :button-1 :button-2 :button-3 :button-4 :button-5) null))
-   (check-type state (or mask16 null))
-   (let ((owning-button (button-owning-dialog menu)))
-     (cond (owning-button
-	    (set-menu-position owning-button menu
-			       (and button state
-				    (not (logtest (make-state-mask button) state)))))
-	   (:else
-	    ;;  No button, this is a pop-up menu.
-	    (set-menu-position nil menu
-			       (and button state
-				    (not (logtest (make-state-mask button) state))))
-	    (associate-menu-with-dialog-button menu nil)
-	    ;;  Need this to do the initial grab-handoff to the menu so we can
-	    ;;  start popups in press-drag-release -- a quick enough button-release
-	    ;;  will switch to click-move-click, but I'm not sure of the mechanism.
-	    ;;  Need to do it as a callback because we can't grab until we're mapped,
-	    ;;  and that doesn't happen immediately.
-	    (add-callback menu :map
-			  #'(lambda ()
-			      (ungrab-pointer (contact-display menu))
-			      (grab-pointer menu #.(make-event-mask :button-release :enter-window :leave-window)
-					    :owner-p t
-					    :cursor (contact-glyph-cursor menu *menu-cursor-index*))))))
-     (setf (contact-state menu) :mapped)
-     (setf (menu-state menu) nil)))
+  (declare (ignore x y))			; Stick to Open Look positioning rules.
+  (check-type button (or (member :button-1 :button-2 :button-3 :button-4 :button-5) null))
+  (check-type state (or mask16 null))
+  (let ((owning-button (button-owning-dialog menu)))
+    (cond (owning-button
+	   (set-menu-position owning-button menu
+			      (and button state
+				   (not (logtest (make-state-mask button) state)))))
+	  (:else
+	   ;;  No button, this is a pop-up menu.
+	   (set-menu-position nil menu
+			      (and button state
+				   (not (logtest (make-state-mask button) state))))
+	   (associate-menu-with-dialog-button menu nil)
+	   ;;  Need this to do the initial grab-handoff to the menu so we can
+	   ;;  start popups in press-drag-release -- a quick enough button-release
+	   ;;  will switch to click-move-click, but I'm not sure of the mechanism.
+	   ;;  Need to do it as a callback because we can't grab until we're mapped,
+	   ;;  and that doesn't happen immediately.
+	   (add-callback menu :map
+			 #'(lambda ()
+			     (ungrab-pointer (contact-display menu))
+			     (grab-pointer menu #.(make-event-mask :button-release :enter-window :leave-window)
+					   :owner-p t
+					   :cursor (contact-glyph-cursor menu *menu-cursor-index*))))))
+    (setf (contact-state menu) :mapped)
+    (setf (menu-state menu) nil)))
 
 ;;  Default case, just position it and map it (this method handles commands and
 ;;  property-sheets, but not confirms or menus).
 (defmethod present-dialog ((contact contact) &key x y button state)
-   (declare (type (or (member :button-1 :button-2 :button-3 :button-4 :button-5) null) button)
-	    (type (or mask16 null) state))
-   (declare (ignore button state))
    (check-type x (or card16 null))
    (check-type y (or card16 null))
    (unless (or x y)
@@ -401,7 +385,7 @@ to bring up a submenu.")
 	       (dims (getf *button-dimensions-by-scale* scale))
 	       (text-x (ab-left-button-end-width dims))
 	       (text-y (1+ (ab-text-baseline dims))))  ; 0+ for dialog-item.
-	  
+
 ;;  Experiment:  try changing the label and redisplaying.  Problems:  doesn't
 ;;  suppress the menu mark, doesn't show the more-text-to-right gray arrow.
 ;	   (with-slots (label) dialog-button
@@ -410,34 +394,34 @@ to bring up a submenu.")
 ;		   (progn (setq label (button-label default))
 ;			  (redisplay-button dialog-button))
 ;		 (setq label old-label))))
-	  
+
 	  ;;  Avoid error on abbreviated buttons -- interior width ends up negative.
 	  ;;  This way, we just highlight and don't even try to show the default.
 	  (unless (< width (+ (ab-left-button-end-width dims)
 			      (ab-right-button-end-width dims)))
-	    
+
 	    (using-gcontext
 	      (gc
 		:drawable   dialog-button
 		:foreground ab-foreground
 		:background ab-fill-color
-		:font	    ab-font) 
+		:font	    ab-font)
 	      (just-clear-body-of-button dialog-button gc))
-	    
+
 	    (using-gcontext
 	      (gc
 		:drawable    dialog-button
 		:foreground  ab-fill-color
 		:background  ab-foreground
 		:font	     ab-font)
-	      
+
 	      (let ((default-label (button-label default)))
 		(if (stringp default-label)
 		    (display-constrained-text
 		      dialog-button gc default-label ab-font
 		      (label-width dialog-button label)
 		      :x text-x :y text-y)
-		    
+
 		    (let*
 		      ((label-width  (label-width dialog-button default-label))
 		       (label-height (getf (pixmap-plist default-label) :height)))
@@ -461,7 +445,7 @@ to bring up a submenu.")
 	  ;;  else we gotta figure out how many chars will fit.
 	  ;;  Since text-width is a very expensive function we're going to try to get an estimate
 	  ;;  for where in the text we get too wide to fit before we start calling it.
-	  
+
 	  (DO* ((reduced-space-for-text (- available-width more-arrow-width))
 		(est-displayable-length (FLOOR reduced-space-for-text (max-char-width font)))
 		(i (1+ est-displayable-length) (1+ i))
@@ -477,10 +461,10 @@ to bring up a submenu.")
     ;;  Get the # of characters that fit (and their width if truncating)...
     (MULTIPLE-VALUE-BIND (displayable-length-of-text displayable-width-of-text)
 	(get-displayable-width-of-text text font available-width)
-      
+
       ;;  Draw the characters that we can...
       (draw-glyphs contact gc x y text :end displayable-length-of-text)
-      
+
       ;;  If the entire label would not fit, place a More Text Arrow to the right of it...
       ;;  We assume here that the pixmap for this scale's More Text Arrow has already been
       ;;     cached so contact-mask can pick it up...
@@ -586,7 +570,7 @@ to bring up a submenu.")
 	     ;; We ungrab the pointer independent of its current location since
 	     ;; the menu will be responsible for fielding any release event.
 	     (ungrab-pointer (contact-display button) :time time)
-	     
+
 	     (multiple-value-bind (dialog-x dialog-y)
 		 (contact-translate (contact-root button) root-x root-y dialog)
 	       (if (inside-contact-p dialog dialog-x dialog-y) ; Avoid server round-trip.
@@ -596,7 +580,7 @@ to bring up a submenu.")
 		   (grab-pointer dialog #.(make-event-mask :button-release :enter-window)
 				 :cursor (contact-glyph-cursor dialog *menu-cursor-index*))))
 	     (setf (menu-state dialog) 'press-drag-release)))
-	 
+
 	 (with-slots (last-displayed-as) button
 	   ;;  Do nothing unless highlighted/selected already...
 	   (WHEN (EQ last-displayed-as :highlighted)
@@ -1010,12 +994,12 @@ to bring up a submenu.")
   (with-slots (width height x y border-width parent) self
     (unless (realized-p menu)
       (initialize-geometry menu))
-    
+
     (let ((menu-width (contact-width (contact-parent (menu-choice menu)))))
 	;; We use the width of the *container* so menu will be
 	;; centered without considering the drop shadow.
       (multiple-value-bind (menu-x menu-y)
-	  (contact-translate      
+	  (contact-translate
 	    (contact-parent self)
 	    (- (+ x (round width 2)) (round menu-width 2))
 	    (+ y border-width border-width height 1)

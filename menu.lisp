@@ -20,80 +20,61 @@
 
 (in-package "CLIO-OPEN")
 
-(export '(
-	  make-menu
-	  menu
-	  menu-choice
-	  menu-title
-	  )
-	'clio-open)
 
-
-;================================================================;
-;		           THE PUSHPIN CONTACT  		 ;
-;================================================================;
-
-
-
-
+;;; The pushpin contact
 
 (defcontact pushpin-button (button)
   ((pointer-pressed   :type      boolean
 		      :initform  nil))
   (:resources
     (border-width :initform 0)
-    
+
     (switch       :type (member :in :out)
 		  :initform :out)))
 
 (defun make-pushpin-button (&rest initargs)
   (apply #'make-contact 'pushpin-button initargs))
 
-
+(defvar get-ol-menu-spec nil)
+
+;;(eval-when (:execute :load-toplevel :compile-toplevel)
+  ;; These state variables are used to cache the menu spec for the
 (let
-  ((last-scale '())      ;These state variables are used to cache the menu spec for the
-   (last-spec '()))      ;most recent scale requested.
-  (defun get-OL-menu-spec (self)
-    (declare (type (or NULL contact) self))
-    (if (null self)
-	(setf last-scale NIL)     ;This is just in case anyone ever needs to reset state
-	(let((this-scale (contact-scale self)))
-	  (if (eq this-scale last-scale)
-	      last-spec
-	      (let
-		((spec (cdr (assoc this-scale *OL-menu-spec-alist*))))
-		(setf last-scale this-scale)
-		(setf last-spec spec)))))))
+    ((last-scale '())
+     ;; most recent scale requested.
+     (last-spec '()))
+  (setf (symbol-function 'get-ol-menu-spec)
+	(lambda (self)
+	  (if (null self)
+	      ;; This is just in case anyone ever needs to reset state
+	      (setf last-scale NIL)
+	      (let((this-scale (contact-scale self)))
+		(if (eq this-scale last-scale)
+		    last-spec
+		    (let
+			((spec (cdr (assoc this-scale *ol-menu-spec-alist*))))
+		      (setf last-scale this-scale)
+		      (setf last-spec spec))))))))
 
 (defun get-pushpin-spec (self)
   (declare (type pushpin-button self))
   (OL-menu-spec-pushpin (get-OL-menu-spec self)))
-  
 
 (defmethod initialize-instance :after ((self pushpin-button)
 				       &key switch &allow-other-keys)
-
   (with-slots (border-width selected) self
     (setf border-width 0)
-
     (when (eq switch :in)
       (setf selected 2))))
 
 
-
-
-
 (DEFMETHOD preferred-size ((self pushpin-button) &key width height border-width)
   (declare (ignore width height border-width))
-  
-  (DECLARE (VALUES preferred-width preferred-height
-		   preferred-border-width))
   (let*
     ((menu-spec (get-OL-menu-spec self))
      (pushpin-spec (OL-menu-spec-pushpin menu-spec)))
-    
     (with-slots (preferred-width) self
-      (VALUES				      
+      (VALUES
 	(OR preferred-width
 	    (SETF preferred-width
 		  (+ (pushpin-spec-box-width pushpin-spec)
@@ -104,17 +85,12 @@
 	0))))
 
 
-
-;;; =================================================================================== ;;;
-;;;											;;;
-;;;    	                      Display a Pushpin Button...				;;;
-;;;											;;;
-;;; =================================================================================== ;;;
+;;; Display a Pushpin Button...
 
 (flet
   ((display-pushpin-button (self menu-spec spec &optional completely-p)
       (with-slots (font background foreground width height label) self
-	(WHEN (realized-p self)			
+	(WHEN (realized-p self)
 	  (using-gcontext (gc
 			    :drawable 	self
 			    :exposures  :off
@@ -122,14 +98,14 @@
 ;;			    :background background
 			    :font 	font
 			    :line-width	1)
-	    
+
 	    (WHEN completely-p
 	      (clear-area self
 			  :x 0
 			  :y 0
 			  :width  width
 			  :height height))
-	      
+
 
 	    (let*
 	      ((lab-width (drawable-width label))
@@ -174,7 +150,7 @@
 	  (display-pushpin-button self menu-spec spec completely-p))
       (SETF last-displayed-as :unhighlighted))) )
 
-;;; NOTE: The following choice item methods for pushpins should invoke the choice 
+;;; NOTE: The following choice item methods for pushpins should invoke the choice
 ;;; item callbacks, but I haven't done this yet.
 
 (defmethod choice-item-press ((pushpin-button pushpin-button))
@@ -227,7 +203,7 @@
      (with-slots (selected pointer-pressed) self
        (WHEN (AND (> 0 selected)
 		  (NOT (ZEROP (LOGAND #.(make-state-mask :button-1) state))))
-	 (UNWIND-PROTECT 
+	 (UNWIND-PROTECT
 	     (choice-item-release self)
 	   (setq pointer-pressed nil))))))
 
@@ -241,7 +217,6 @@
 
 (DEFMETHOD (SETF choice-item-selected-p) (new-value (self pushpin-button))
    ;; Identical to (SETF button-switch) except returns boolean in/out indicator.
-   (DECLARE (VALUES new-value))
    (EQ (SETF (button-switch self) (if new-value :in :out)) :in))
 
 ;;; ========================================================================== ;;;
@@ -254,14 +229,14 @@
    (with-slots (selected) self
      (NTH (1- (ABS selected)) '(:out :in))))
 
-(DEFMETHOD (SETF button-switch) (new-state (self pushpin-button))
+(defmethod (setf button-switch) (new-state (self pushpin-button))
    (check-type new-state (member :in :out))
-   (LET ((current-state (button-switch self)))
-     (WHEN (NOT (EQ current-state new-state))
-       ;; We simulate a button press and release to implement identical
-       ;; semantics whether done via API or via gesture.
-       (WHEN (choice-item-press self)
-	 ;; When toggle press succeeded we follow it
+   (let ((current-state (button-switch self)))
+     (when (not (eq current-state new-state))
+       ;; we simulate a button press and release to implement identical
+       ;; semantics whether done via api or via gesture.
+       (when (choice-item-press self)
+	 ;; when toggle press succeeded we follow it
 	 ;; with a release.
 	 (choice-item-release self)))
      (button-switch self)))
@@ -294,12 +269,11 @@
 	  (:button-release :button-3)
    menu-release-pushpin-button)
 
-
-;================================================================;
-;			   MENU  CONTACT			 ;
-;================================================================;
+
+;			   menu  contact			 ;
 
 (defcontact menu (core-shell core override-shell)
+  ()
   (:resources
     (title 	  :type     (or null string)
 	  	  :initform nil)
@@ -308,21 +282,18 @@
     (save-under   :initform :on)
     (border-width :initform 0))
   (:documentation "A shell which presents a set of choice items."))
-  
+
 (defun make-menu (&rest initargs)
   "Creates and returns a menu instance."
-  (declare (values menu)) 
   (apply #'make-contact 'menu initargs))
 
 (defmethod initialize-instance :after ((menu menu) &rest args
 				       &key (choice 'make-choices) &allow-other-keys)
-  (with-slots (background border-width width height) menu    
-
-;;  Can't do this now that the choice arg is a constructor rather than a type.
-;    (let ((choice-class (if (consp choice) (first choice) choice))) 
-;      (assert (subtypep choice-class 'composite) nil
-;	      "~s is not a composite subclass name." choice-class)) 
-    
+  (with-slots (background border-width width height) menu
+;;  Can't do this now that the choice arg is a constructor rather than
+;;  a type.  (let ((choice-class (if (consp choice) (first choice)
+;;  choice))) (assert (subtypep choice-class 'composite) nil "~s is
+;;  not a composite subclass name." choice-class))
     (apply #'make-contact
 	   'drop-shadow
 	   :parent menu
@@ -332,7 +303,6 @@
 	   :height height
 	   :content choice
 	   args)
-
     ;; Now that content is created with initial attributes,
     ;; reset background, border-width to accommodate drop-shadow.
     (setf background   :none
@@ -364,7 +334,7 @@
 			(composite-children (menu-container menu))
 			:key 'contact-name))
      (title       (convert menu new-title 'string)))
-    
+
     (assert title nil "~a cannot be converted to a title string." new-title)
 
     (cond
@@ -372,7 +342,7 @@
        (change-geometry
 	 title-field
 	 :width    (text-width (display-text-font title-field) title)
-	 :accept-p t)       
+	 :accept-p t)
        (setf (display-text-source title-field) title))
 
       (t
@@ -390,14 +360,9 @@
     (when title-field
       (display-text-source title-field))))
 
-
 (defmethod preferred-size ((self menu) &key width height border-width)
   (declare (ignore width height border-width))
-
-  (declare (values preferred-width preferred-height
-		   preferred-border-width))
   (preferred-size (first (composite-children self))))
-
 
 (defmethod shell-mapped ((self menu))
   "Invokes :initialize callback function."
@@ -422,7 +387,6 @@
     ;; Ignore background, border-width
     (setf background :none)
     (setf border-width 0))
-
   ;; Make the menu container to hold the content, title, & pushpin components.
   (apply #'make-contact 'menu-container
     :name :menu-container
@@ -531,7 +495,7 @@
 	    (max 1 (- width bw bw dsw))
 	    (max 1 (- height bw bw dsw))
 	    bw)))
-    
+
 
 ;================================================================;
 ;			MENU-CONTAINER CONTACT			 ;
@@ -541,13 +505,13 @@
   ((compress-exposures :initform :on))
   (:resources
     (event-mask :initform #.(make-event-mask :exposure)))
-  (:documentation 
+  (:documentation
     "A composite containing a content and (optionally) a title and pushpin"))
 
 (defmethod initialize-instance :after ((self menu-container)
 				       &rest args
 				       &key content (pushpin :off) title
-				       &allow-other-keys) 
+				       &allow-other-keys)
 
   (let ((menu      (contact-parent (contact-parent self)))
 	(menu-spec (get-OL-menu-spec self)))
@@ -561,34 +525,34 @@
       ;; Inherit border-width from menu
       (setf border-width (max (contact-border-width menu)
 			      (point-pixels (contact-screen self)))))
-      
-      
+
+
       ;; Initialize content
       (multiple-value-bind (content-constructor content-args)
 	  (if (consp content) (values (first content) (rest content)) content)
-	
+
 	(add-callback
 	  (if (null content-args)
-	      
-	      ;; Default choice initialization 
+
+	      ;; Default choice initialization
 	      (funcall content-constructor
 		:name          :content
 		:parent        self
-		:border-width  0 
+		:border-width  0
 		:left-margin   (OL-menu-spec-pushpin-dx menu-spec)
 		:right-margin  (OL-menu-spec-pushpin-dx menu-spec)
-		:bottom-margin (OL-menu-spec-drop-shadow-offset menu-spec) 
+		:bottom-margin (OL-menu-spec-drop-shadow-offset menu-spec)
 		:top-margin    (OL-menu-spec-drop-shadow-offset menu-spec)
 		:columns       1
 		:same-width-in-column :on)
-	      
+
 	      ;; Else use given content initargs
 	      (apply content-constructor
 		     :name          :content
 		     :parent        self
-		     :border-width  0 
+		     :border-width  0
 		     content-args))
-	  
+
 	  :new-choice-item
 	  #'add-menu-item-callbacks menu))
 
@@ -622,7 +586,7 @@
        (unless (and pushpin
 		    (eq :in (button-switch pushpin)))
 	 (setf (contact-state menu) :withdrawn)))))
-     
+
 
 (defmethod display ((self menu-container)
 		    &optional exposed-x exposed-y exposed-width exposed-height &key)
@@ -632,7 +596,7 @@
       (let ((tbar-x 4) ; Kludge! this is actually a function of scale.
 	    (tbar-y (- (contact-y (find :content children :key #'contact-name)) 1)))
 	(using-gcontext (gc :drawable self :foreground foreground)
-	  (draw-line self gc tbar-x tbar-y (- width tbar-x) tbar-y))))))	
+	  (draw-line self gc tbar-x tbar-y (- width tbar-x) tbar-y))))))
 
 
 ;================================================================;
@@ -641,7 +605,7 @@
 (labels
   (
    (disapprove () NIL)
-   
+
    (fail () (error "Unable to layout menu-container." ))
 
    (shrink/expand-title (title pw ph tw th cw ch failure-thunk)
@@ -676,7 +640,7 @@
 
    (shrink/expand-content (content pw ph tw th cw ch failure-thunk)
      (multiple-value-bind (cw1 ch1)
-	 (preferred-size content :width 0 :height 0) 
+	 (preferred-size content :width 0 :height 0)
        (if (<= cw1 cw)
 	   ;; We assume it's OK to make content *wider* than preferred width,
 	   ;; but avoid making it narrower.
@@ -692,7 +656,7 @@
 			   0)
 		       (+ cw (ol-menu-spec-title-dx (get-ol-menu-spec content))
 			     (ol-menu-spec-title-dx (get-ol-menu-spec content)))
-		       ))			;Allow 2 pixels for left & right border ;; jba 
+		       ))			;Allow 2 pixels for left & right border ;; jba
 	     (+ 2				;Allow 2 pixels for top & bottom border
 		(or (and ph th (max ph th)) ph th 0)
 		(if th 1 0)			;Title bar only if title
@@ -713,21 +677,21 @@
 	 (h (contact-height component)))
 	(unless (and (= x cx) (= y cy)) (move component cx cy))
 	(unless (and (= w cw) (= h ch)) (resize component cw ch 0))))
-	
-   (execute-layout (self width height ppin pw ph title tw th content cw ch) 
+
+   (execute-layout (self width height ppin pw ph title tw th content cw ch)
      (assert
        (change-geometry self :width width :height height)
        ()
        "Unable to layout menu ~a" self)
-	
+
      (multiple-value-bind (px py tx ty cx cy)
 	 (locate-menu-components pw ph tw th width self)
        (when ppin (reposition&resize ppin px py pw ph))
-       (when title 
+       (when title
 	 (reposition&resize title tx ty tw th))
        (when content (reposition&resize content cx cy cw ch))) )
 
-   (locate-menu-components (pw ph tw th width self) 
+   (locate-menu-components (pw ph tw th width self)
      (cond
        ((and pw tw)
 	(values
@@ -749,7 +713,7 @@
 	  ph))
        (tw
 	(values
-	  NIL NIL 
+	  NIL NIL
 	  (max (ol-menu-spec-title-dx (get-ol-menu-spec self))
 	       (pixel-round (- width
 			 (contact-width (find :menu-title (composite-children self) :key #'contact-name)))
@@ -765,8 +729,8 @@
 	  NIL NIL
 	  NIL NIL
 	  0 0))))
-      
-   (layout-menu-container (ppin pw ph title tw th content cw ch) 
+
+   (layout-menu-container (ppin pw ph title tw th content cw ch)
      (cond
        ((and title ppin)
 	; Menu has title and pushpin in addition to content
@@ -801,7 +765,7 @@
 			    (+ tw pw)		; Will fail when title is bigger, so width is title width.
 			    ch
 			    #'fail))))))))
-       
+
        (title
 	;Menu has title, but no pushpin
 	(if (= tw cw)
@@ -823,7 +787,7 @@
 	      #'(lambda()
 		  (shrink/expand-content content pw ph tw th tw ch #'fail)))
 	    ))
-       
+
        (ppin
 	;Menu has pushpin, but no title
 	(if (> cw pw)
@@ -831,7 +795,7 @@
 		       (ol-menu-spec-title-dx (get-ol-menu-spec content)))
 		    (+ 2 ph ch) pw ph tw th cw ch)
 	    (shrink/expand-content content pw ph tw th pw ch #'fail)))
-       
+
        (t
 	;Menu has neither pushpin nor title
 	(values (+ 2 cw) (+ 2 ch) pw ph tw th cw ch))))   )
@@ -841,15 +805,15 @@
     (declare (ignore newly-managed))
     (let*
       ((children (composite-children self))
-       
+
        (content (find :content children :key #'contact-name))
        (cw (contact-width content))
        (ch (contact-height content))
-       
+
        (title (find :menu-title children :key #'contact-name))
        (tw (and title (contact-width title)))
        (th (and title (contact-height title)))
-       
+
        (ppin (find :pushpin children :key #'contact-name))
        (pw (and ppin (contact-width ppin)))
        (ph (and ppin (contact-height ppin))))
@@ -878,15 +842,15 @@
   (defmethod manage-geometry ((self menu-container) child x y width height bw &key)
     (let*
       ((children (composite-children self))
-       
+
        (content (find :content children :key #'contact-name))
        (cw (contact-width content))
        (ch (contact-height content))
-       
+
        (title (find :menu-title children :key #'contact-name))
        (tw (and title (contact-width title)))
        (th (and title (contact-height title)))
-       
+
        (ppin (find :pushpin children :key #'contact-name))
        (pw (and ppin (contact-width ppin)))
        (ph (and ppin (contact-height ppin)))
@@ -960,7 +924,7 @@
 		     ch
 		     #'disapprove))))
 	    ;; It must be the pushpin which has changed
-	    (title    
+	    (title
 	     (shrink/expand-title
 	       title
 	       width

@@ -18,14 +18,9 @@
 ;;;                                                                                  |
 ;;;----------------------------------------------------------------------------------+
 
+
 (in-package "CLIO-OPEN")
 
-(export '(
-	  text-command-table
-	  text-command
-	  make-text-command-table
-	  )
-	'clio-open)
 
 ;;;----------------------------------------------------------------------------+
 ;;;                                                                            |
@@ -51,10 +46,8 @@ either a functionp object or a list of the form (function . args)."
       (let ((char    (first commands))
 	    (command (second commands)))
 	(assert command nil "No command given for ~a." char)
-	
+
 	(setf (text-command table char) command)
 
 	(setf commands (cddr commands))))
-    table)) 
-
-
+    table))

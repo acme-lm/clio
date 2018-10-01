@@ -1,52 +1,27 @@
 ;; -*- MODE:LISP; Package:CLIO-OPEN; Base:10; Lowercase:T; Fonts:(CPTFONT); Syntax:Common-Lisp -*-
 
 
-;;;----------------------------------------------------------------------------------+
-;;;                                                                                  |
-;;;                          TEXAS INSTRUMENTS INCORPORATED                          |
-;;;                                  P.O. BOX 149149                                 |
-;;;                                AUSTIN, TEXAS 78714                               |
-;;;                                                                                  |
-;;;             Copyright (C) 1989, 1990 Texas Instruments Incorporated.             |
-;;;                                                                                  |
-;;; Permission is granted to any individual or institution to use, copy, modify, and |
-;;; distribute this software, provided that  this complete copyright and  permission |
-;;; notice is maintained, intact, in all copies and supporting documentation.        |
-;;;                                                                                  |
-;;; Texas Instruments Incorporated provides this software "as is" without express or |
-;;; implied warranty.                                                                |
-;;;                                                                                  |
-;;;----------------------------------------------------------------------------------+
+;;; Texas Instruments Incorporated
+;;; PO Box 149149
+;;; Austin, Texas 78714
+;;;
+;;; Copyright (c) 1989, 1990 Texas Instruments Incorporated.
+;;;
+;;; Permission is granted to any individual or institution to use,
+;;; copy, modify, and distribute this software, provided that this
+;;; complete copyright and permission notice is maintained, intact, in
+;;; all copies and supporting documentation.
+;;;
+;;; texas instruments incorporated provides this software "as is"
+;;; without express or implied warranty.
 
 
-(in-package "CLIO-OPEN")
+(in-package :clio-open)
 
-(proclaim '(special *default-display-text-font*)) ;; defined in display-text.lisp
+;; defined in display-text.lisp
+(proclaim '(special *default-display-text-font*))
 
-(EXPORT '(
-	  action-button
-	  button-font
-	  button-label
-	  button-label-alignment
-	  button-switch
-	  choice-item-highlight-default-p
-	  choice-item-font
-	  choice-item-highlight-selected-p
-	  choice-item-label
-	  choice-item-selected-p
-	  make-action-button
-	  make-action-item
-	  make-toggle-button
-	  action-item
-	  toggle-button
-	  )
-	'clio-open)
-
-;;; =================================================================================== ;;;
-;;;											;;;
-;;;	 C o n s t a n t s   a n d   S t r u c t u r e s   f o r   B u t t o n s	;;;
-;;;											;;;
-;;; =================================================================================== ;;;
+;;;	 Constants and Structuresfor Buttons	;;;
 
 (DEFUN create-filled-in-circle-image (circle-image)
 
@@ -270,7 +245,7 @@
 	 	:reader         button-font			       ; setf defined below
 		:initarg	:font
 	 	:initform 	*default-display-text-font*)
-   
+
    (label 	:type 		(or pixmap label-string)
 	  	:reader   	button-label			       ; setf defined below
 		:initarg	:label
@@ -284,7 +259,7 @@
 
    (compress-exposures
                 :initform       :off
-		:type           (member :off :on)		
+		:type           (member :off :on)
 		:reader         contact-compress-exposures
 		:allocation     :class)
 
@@ -334,7 +309,6 @@
 
 
 (DEFMETHOD (SETF button-label) (new-label (button button))
-  (DECLARE (VALUES (OR pixmap string)))
   (with-slots (label parent preferred-width width height border-width) button
 
     (let ((converted-label (convert button new-label '(or pixmap label-string))))
@@ -354,21 +328,20 @@
 	  (multiple-value-bind (new-width new-height)
 	      (preferred-size button)
 	    ;; We don't invoke change-geometry unless size actually changed.
-	    (unless    
+	    (unless
 	      (and (= width new-width) (= height new-height))
 	      (change-geometry button :width new-width :height new-height :accept-p t)))))
     label))
 
 
 (defmethod (setf button-font) (new-font (button button))
-  (declare (values font))
-  (check-type new-font fontable) 
+  (check-type new-font fontable)
   (with-slots (font label) button
     (setf font (find-font button new-font))
-    
+
     ;; Save original fontname requested. Used again when changing scale.
     (setf (getf (window-plist button) 'fontname) new-font)
-    
+
     (when label
       (setf (button-label button) label)))
   new-font)
@@ -384,13 +357,13 @@
 ;;;                              Initialization                                |
 ;;;                                                                            |
 ;;;----------------------------------------------------------------------------+
- 
+
 (defmethod initialize-instance :after ((button button) &key &allow-other-keys)
   (with-slots (label font name fill-color border-width) button
-   
+
     ;;  Initialize font for current scale
     (setf (button-font button) font)
-    
+
     (UNLESS (resource button :name)
       (SETF name (stringable-keyword label)))
 
@@ -416,7 +389,6 @@
 ;;; =================================================================================== ;;;
 
 (defmethod (setf choice-item-highlight-default-p) (new-value (button button))
-  (declare (values new-highlight-default-p-value))
   (with-slots (highlight-default-p) button
     (let ((new-value (when new-value t)))
       (unless (eq new-value highlight-default-p)
@@ -437,13 +409,11 @@
 
 
 (defmethod choice-item-highlight-selected-p ((button button))
-  (declare (values highlight-selected-p))
   (with-slots (last-displayed-as) button
     (eq last-displayed-as :highlighted)))
 
 
 (defmethod (setf choice-item-highlight-selected-p) (new-value (button button))
-  (declare (values highlight-selected-p))
   (let ((highlight-selected-p (choice-item-highlight-selected-p button))
 	(new-value            (when new-value t)))
     (unless (eq highlight-selected-p new-value)
@@ -459,10 +429,9 @@
 
 
 (defmethod (setf choice-item-selected-p) (new-value (button button))
-  (declare (values new-value))
   (let ((new-value (when new-value t)))
     (unless (eq new-value (choice-item-selected-p button))
-      (with-slots (selected) button 
+      (with-slots (selected) button
 	(setf selected (if new-value 2 1))
 	(setf (choice-item-highlight-selected-p button) new-value)
 	(apply-callback button (if new-value :on :off)))))
@@ -509,7 +478,7 @@
 
 
 (DEFUN get-button-pixmaps (button)
-  
+
   ;;
   ;;  Look on the display's plist for an :OL-button-pixmaps property.  If any action
   ;;  button has created pixmaps from its images, they'll be here...
@@ -519,7 +488,7 @@
 	 (button-pixmaps (GETF (display-plist display) :OL-button-pixmaps))
 	 (button-pixmaps-for-this-size-button (GETF button-pixmaps scale))
 	 (dims (GETF *button-dimensions-by-scale* scale)))
-    
+
     ;;
     ;;  If there are no pixmaps cached on the display's plist for this scale action button,
     ;;  create some, put them into a button-pixmaps structure, then put it on the display's plist...
@@ -545,7 +514,7 @@
 		    :vertical-menu-mark-pixmap
 		    (image-pixmap button (ab-vertical-menu-mark-image dims)))))
       (SETF (GETF (display-plist display) :OL-button-pixmaps) button-pixmaps))
-    
+
     ;;
     ;;  Return the button-pixmaps structure containing the pixmaps for this button's scale...
     ;;
@@ -565,7 +534,7 @@
 		      :initform  nil))
   (:resources
     (border-width :initform 0)
-    
+
     (switch       :type (member :on :off)
 		  :initform :off)))
 
@@ -679,10 +648,6 @@
 
 (DEFMETHOD preferred-size ((toggle-button toggle-button) &key width height border-width)
     (declare (ignore width height border-width))
-
-  (DECLARE (VALUES preferred-width preferred-height
-		   preferred-border-width))
-
   ;;  A toggle-button must draw its border within its window so it can be dimmed if the button
   ;;  becomes insensitive.  So its border-width is zero.
   ;;  Its preferred height is that dictated by its scale slot.
@@ -751,14 +716,13 @@
   (with-event (state)
     (with-slots (selected pointer-pressed) toggle-button
       (WHEN (> 0 selected)
-	(UNWIND-PROTECT 
+	(UNWIND-PROTECT
 	    (choice-item-release toggle-button)
 	  (setq pointer-pressed nil))))))
 
 
 (DEFMETHOD (SETF choice-item-selected-p) (new-value (toggle-button toggle-button))
   ;; Identical to (SETF button-switch) except returns boolean on/off indicator.
-  (DECLARE (VALUES new-value))
   (EQ (SETF (button-switch toggle-button) (if new-value :on :off)) :on))
 
 
@@ -773,13 +737,13 @@
 (DEFUN display-toggle-button (toggle-button mode &optional completely-p)
   (declare (type toggle-button toggle-button))
   (with-slots (font fill-color foreground highlight-default-p width height)
-	      toggle-button 
+	      toggle-button
     (WHEN (realized-p toggle-button)
       (LET ((tb-foreground foreground) (tb-fill-color fill-color) (tb-font font)
 	    (tb-width width) (tb-height height)
 	    stroke-width two-stroke-widths four-stroke-widths
 	    (sensitive-p (sensitive-p toggle-button)))
-	
+
 	(SETF stroke-width 1
 	      two-stroke-widths (* 2 stroke-width)
 	      four-stroke-widths (* 2 two-stroke-widths))
@@ -792,7 +756,7 @@
 			  :fill-style	(IF sensitive-p :solid :stippled)
 			  :stipple	(UNLESS sensitive-p
 					  (contact-image-mask toggle-button 50%gray :depth 1)))
-	  
+
 	  (WHEN completely-p
 	    (clear-area toggle-button
 			:x 0
@@ -815,7 +779,7 @@
 	       (DOTIMES (i stroke-width)
 		 (draw-rectangle toggle-button gc (+ two-stroke-widths i) (+ two-stroke-widths i)
 				 (- tb-width four-stroke-widths 1 i i)
-				 (- tb-height four-stroke-widths 1 i i))))				   
+				 (- tb-height four-stroke-widths 1 i i))))
 	     (draw/erase-highlight ()
 	       (DOTIMES (i stroke-width)
 		 (draw-rectangle toggle-button gc (+ stroke-width i) (+ stroke-width i)
@@ -865,30 +829,30 @@
   (with-slots (font) button
     (text-width font label)))
 
-(defmethod label-width ((button button) (label pixmap)) 
+(defmethod label-width ((button button) (label pixmap))
   (or (getf (pixmap-plist label) :width)
       (with-state (label)
 	(setf (getf (pixmap-plist label) :width)  (drawable-width label)
 	      (getf (pixmap-plist label) :height) (drawable-height label)))))
- 
+
 (defun display-any-buttons-label (button gc top-border-thickness left-border-adjustment)
   (with-slots (label label-alignment width height) (the button button)
     (let*
       ((dims        (getf *button-dimensions-by-scale* (contact-scale button)))
        (label-width (label-width button label))
-       (margin      (- (ab-left-button-end-width dims) left-border-adjustment)) 
+       (margin      (- (ab-left-button-end-width dims) left-border-adjustment))
        (left-margin (max margin
 			 (case label-alignment
 			   (:left   0)
 			   (:center (pixel-round (- width label-width) 2))
-			   (:right  (- width margin label-width)))))) 
-      
+			   (:right  (- width margin label-width))))))
+
       (if (stringp label)
 	  (draw-glyphs
 	    button gc
 	    left-margin (+ top-border-thickness (ab-text-baseline dims))
 	    label)
-	  
+
 	  ;; Else display pixmap label...
 	  (let ((label-height (getf (pixmap-plist label) :height)))
 	    (with-gcontext (gc :fill-style :tiled :tile label)
@@ -920,12 +884,12 @@
 
 
 (defmethod choice-item-press ((action-button action-button))
-  
+
   ;; choice-item-press does the necessary tasks to reflect
   ;; an action-button press provided that the :change-allowed-p
   ;; callback (if any) allows the state change.  The returned
   ;; value indicates whether the press was allowed or not.
-  
+
   (when (apply-callback-else (action-button :change-allowed-p t) t)
     (display-button-highlighted action-button)
     (apply-callback action-button :press)
@@ -933,13 +897,13 @@
     t))
 
 (DEFMETHOD choice-item-release ((action-button action-button))
-  
+
   ;; choice-item-release does the necessary tasks to reflect
   ;; an action-button release.  It is assumed that a press has
   ;; occurred and that the press action was allowed; thus, we
   ;; don't invoke the :change-allowed-p callback again here.
 
-  (with-slots (selected) action-button			     
+  (with-slots (selected) action-button
     (display-action-button-busy action-button)
     (display-force-output (contact-display action-button))
 
@@ -972,7 +936,6 @@
 
 
 (DEFMETHOD (SETF choice-item-selected-p) (new-value (action-button action-button))
-  (DECLARE (VALUES new-value))
   (with-slots (last-displayed-as) action-button
     ;; For an unselected action button and a new-value of T, this method must act like a button
     ;; press followed immediately by a button release.  If the button is already
@@ -985,13 +948,13 @@
 	;; When press action was allowed we proceed with
 	;; ersatz release.
 	(choice-item-release action-button)))
-    
+
     ;; else the application is trying to unselect an action button.  This is meaningful only when
     ;; the action button is selected, which is a momentary state for an action button.  A
     ;; "selected" action button by definition is in the process of transitioning to "unselected".
     ;; As a part of this transition all callbacks will be applied.  So in this case it seems
     ;; reasonable for the method to do nothing
-    
+
     new-value))
 
 
@@ -1019,18 +982,18 @@
       (:unhighlighted (display-button-unhighlighted action-button completely-p))
       (:highlighted   (display-button-highlighted   action-button completely-p))
       (:busy	    (display-action-button-busy   action-button completely-p)))))
- 
+
 (DEFMETHOD display-button-unhighlighted ((action-button action-button) &optional completely-p)
   (with-slots (font fill-color foreground highlight-default-p last-displayed-as) action-button
-    
+
     (when (realized-p action-button)
       (LET ((ab-foreground foreground) (ab-fill-color fill-color) (ab-font font)
 	    (sensitive-p (sensitive-p action-button)))
-	
+
 	;;  If displaying a dimmed (insensitive) button, always redraw the entire thing...
 	(UNLESS sensitive-p
 	  (SETF completely-p t))
-	
+
 	(using-gcontext (gc
 			  :drawable 	action-button
 			  :foreground 	ab-foreground
@@ -1039,27 +1002,27 @@
 			  :fill-style	(IF sensitive-p :solid :stippled)
 			  :stipple	(UNLESS sensitive-p
 					  (contact-image-mask action-button 50%gray :depth 1)))
-	  
+
 	  (with-gcontext (gc :foreground ab-fill-color :background ab-foreground)
 	    (IF completely-p
 		(clear-button-and-display-border action-button gc)
 		(just-clear-body-of-button action-button gc)))
-	  
+
 	  (display-button-label action-button gc)
-	  
+
 	  (WHEN highlight-default-p
 	    (display-default-indicator action-button gc)))))
-	  
+
     (SETF last-displayed-as :unhighlighted)))
 
 
 (DEFMETHOD display-button-highlighted ((action-button action-button) &optional completely-p)
 
   (with-slots (font fill-color foreground last-displayed-as) action-button
-    
+
     (when (realized-p action-button)
       (LET ((ab-foreground foreground) (ab-fill-color fill-color) (ab-font font))
-	
+
 	;;  An insensitive action button can never be busy, so sensitive-p is not checked
 	;;  or handled here...
 	(using-gcontext (gc
@@ -1067,26 +1030,26 @@
 			  :foreground 	ab-fill-color
 			  :background 	ab-foreground
 			  :font 	ab-font)
-	  
+
 	  (with-gcontext (gc :foreground ab-foreground :background ab-fill-color)
 	    (IF completely-p
 		(clear-button-and-display-border action-button gc)
 		(just-clear-body-of-button action-button gc)))
-	  
+
 	  (display-button-label action-button gc))))
     (SETF last-displayed-as :highlighted)))
 
 
 
-(defmethod display-action-button-busy ((action-button action-button) &optional completely-p)  
+(defmethod display-action-button-busy ((action-button action-button) &optional completely-p)
   (with-slots (font fill-color foreground last-displayed-as) action-button
-    
+
     (when (realized-p action-button)
       (let ((ab-foreground foreground) (ab-fill-color fill-color) (ab-font font))
-	
+
 	;;  An insensitive action button can never be busy, so sensitive-p is not checked
 	;;  or handled here...
-	 
+
 	  ;;  Clear out the non-margin, non-border part of the button with the busy-pixmap
 	  ;;  stipple pattern...
 	  (using-gcontext
@@ -1106,9 +1069,9 @@
 	      :drawable 	action-button
 	      :foreground 	ab-foreground
 	      :background 	ab-fill-color
-	      :font 		ab-font) 
+	      :font 		ab-font)
 	  (display-button-label action-button gc))))
-    
+
     (setf last-displayed-as :busy)))
 
 
@@ -1119,7 +1082,7 @@
 	   (dims (GETF *button-dimensions-by-scale* scale))
 	   (top-border-thickness (IF (TYPEP action-button 'action-item) 0 1))
 	   (button-pixmaps (get-button-pixmaps action-button)))
-      
+
       (SETF interior-width
 	    (- width (ab-left-button-end-width dims) (ab-right-button-end-width dims)))
 
@@ -1162,30 +1125,30 @@
 
       (SETF interior-width
 	    (- width (ab-left-button-end-width dims) (ab-right-button-end-width dims)))
-      
+
       (when (< interior-width 0)
 	(setq interior-width 0))
 
       (SETF body-clear-stencil (ab-body-clearing-stencil-pixmap button-pixmaps))
 
       (with-gcontext (gc :fill-style (IF (EQ fill-style :stippled) :solid fill-style))
-	
+
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;;   Clear out the button's non-border, non-margin pixels to
 	;;	the foreground color of GC...
-	
+
 	;;   Start by clearing the left end of the button...
 	(with-gcontext (gc :clip-x 0 :clip-y top-border-thickness
 			   :clip-mask body-clear-stencil)
 	  (draw-rectangle action-button gc 0 top-border-thickness
 			  (ab-left-button-end-width dims) (contact-height action-button) t))
-	
+
 	;;   Clear out the background for the label...
 	(draw-rectangle action-button gc
 			(ab-left-button-end-width dims)
 			(+ top-border-thickness 1)
 			interior-width (ab-default-ring-height dims) t)
-	
+
 	;;   Clear out the drawable pixels of the right button end...
 	(with-gcontext (gc :clip-x interior-width
 			   :clip-y top-border-thickness
@@ -1207,7 +1170,7 @@
 
       (SETF interior-width
 	    (- width (ab-left-button-end-width dims) (ab-right-button-end-width dims)))
-      
+
       (when (< interior-width 0)
 	(setq interior-width 0))
 
@@ -1215,9 +1178,9 @@
 	    border-stencil (ab-button-ends-pixmap button-pixmaps))
       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
       ;;   Clear out all the button's pixels to fill-color...
-      
+
       (with-gcontext (gc :fill-style (IF (EQ fill-style :stippled) :solid fill-style))
-	
+
 	;;   Start by clearing the left end of the button...
 	(with-gcontext (gc :clip-x 0 :clip-y 0 :clip-mask clear-stencil)
 	  (draw-rectangle action-button gc 0 0
@@ -1231,26 +1194,26 @@
 	  (draw-rectangle action-button gc
 			  (+ (ab-left-button-end-width dims) interior-width) 0
 			  (ab-right-button-end-width dims) height t)))
-      
+
       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
       ;;   Draw in the button's border in foreground...
       (with-gcontext (gc :foreground ab-foreground :background ab-fill-color
 			 :fill-style (IF (EQ fill-style :opaque-stippled) :solid fill-style))
-	
+
 	;;   Start by drawing the border on the left end of the button...
 	(with-gcontext (gc :clip-x 0 :clip-y 0 :clip-mask border-stencil)
 	  (draw-rectangle action-button gc 0 0
 			  (ab-left-button-end-width dims)
 			  height t))
-	
+
 	;;   Draw the top and bottom borders for the label...
 	(draw-rectangle action-button gc
 			(ab-left-button-end-width dims) 0 interior-width 0)
-	
+
 	(draw-rectangle action-button gc
 			(ab-left-button-end-width dims) (- (ab-height dims) 2)
 			interior-width 1)
-	
+
 	;;   Finish by drawing the border on the right end of the button...
 	(with-gcontext (gc :clip-x interior-width :clip-y 0 :clip-mask border-stencil)
 	  (draw-rectangle action-button gc
@@ -1265,9 +1228,6 @@
 
 (DEFMETHOD preferred-size ((action-button action-button) &key width height border-width)
     (declare (ignore width height border-width))
-
-  (DECLARE (VALUES preferred-width preferred-height
-		   preferred-border-width))
 
   ;;  An action button always wants a border-width of zero.
   ;;  Its preferred height is that dictated by its scale slot.
@@ -1285,7 +1245,7 @@
 		(SETF preferred-width (+ (ab-left-button-end-width dims)
 					 (ab-right-button-end-width dims)
 					 (label-width action-button label)))))
-      
+
       (SETF p-height (ab-height dims))
 
       (VALUES p-width (ab-height dims) 0))))
@@ -1300,7 +1260,7 @@
 	   (OR (<= (ab-left-button-end-width dims)
 		   x
 		   (- width (ab-right-button-end-width dims) 1))
-	       (LET* ((clearing-stencil-array (ab-clearing-stencil-array dims)))	    
+	       (LET* ((clearing-stencil-array (ab-clearing-stencil-array dims)))
 		 (WHEN (> x (ab-left-button-end-width dims))
 		   (DECF x (- width (ab-left-button-end-width dims) (ab-right-button-end-width dims))))
 		 (NOT (ZEROP (AREF clearing-stencil-array x y)))))))))
@@ -1393,11 +1353,11 @@
 			 (case label-alignment
 			   (:left   0)
 			   (:center (pixel-round (- width label-width) 2))
-			   (:right  (- width (ai-button-end-width dims) label-width)))))) 
-      
+			   (:right  (- width (ai-button-end-width dims) label-width))))))
+
       (if (stringp label)
 	  (draw-glyphs self gc left-margin (ai-text-baseline dims) label)
-	  
+
 	  ;; Else draw pixmap label...
 	  (let ((label-height (getf (pixmap-plist label) :height)))
 	    (with-gcontext (gc :fill-style :tiled :tile label)
@@ -1415,7 +1375,7 @@
 	   (button-pixmaps (get-button-pixmaps action-item))
 	   (button-end-width (ai-button-end-width dims))
 	   (default-ring-height (ai-default-ring-height dims)))
-      
+
       (SETF interior-width
 	    (- width button-end-width button-end-width))
 
@@ -1448,31 +1408,31 @@
 	   (button-end-width (ai-button-end-width dims))
 	   (default-ring-height (ai-default-ring-height dims))
 	   (fill-style (gcontext-fill-style gc)))
-      
+
       (SETF interior-width
 	    (- width button-end-width button-end-width))
-      
+
       (when (< interior-width 0)
 	(setq interior-width 0))
-      
+
       (SETF body-clear-stencil (ai-body-clearing-stencil-pixmap button-pixmaps))
 
       (with-gcontext (gc :fill-style (IF (EQ fill-style :stippled) :solid fill-style))
-	
+
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;;   Clear out the button's non-border, non-margin pixels to
 	;;	the foreground color of GC...
-	
+
 	;;   Start by clearing the left end of the button...
 	(with-gcontext (gc :clip-x 0 :clip-y 0 :clip-mask body-clear-stencil)
 	  (draw-rectangle action-item gc 0 0
 			  button-end-width default-ring-height t))
-	
+
 	;;   Clear out the background for the label...
 	(draw-rectangle action-item gc
 			button-end-width 0
 			interior-width default-ring-height t)
-	
+
 	;;   Clear out the drawable pixels of the right button end...
 	(with-gcontext (gc :clip-x interior-width :clip-y 0 :clip-mask body-clear-stencil)
 	  (draw-rectangle action-item gc
@@ -1490,10 +1450,6 @@
 
 (DEFMETHOD preferred-size ((action-item action-item) &key width height border-width)
     (declare (ignore width height border-width))
-
-  (DECLARE (VALUES preferred-width preferred-height
-		   preferred-border-width))
-
   ;;  An action button always wants a border-width of zero.
   ;;  Its preferred height is that dictated by its scale slot.
   ;;  Given a text label, its preferred width is the width of its label in the font

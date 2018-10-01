@@ -19,13 +19,8 @@
 ;;;----------------------------------------------------------------------------------+
 
 
-(in-package "CLIO-OPEN")
+(in-package :clio-open)
 
-(export '(
-	  make-slider
-	  slider
-	  )
-	'clio-open)
 
 (defmacro translate-x-to-y (x x-width slider)
   "Translate x coord for horizontal slider into y of a vertical slider.
@@ -64,70 +59,70 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 ;; will be supported.  Since make-slider accepts :
 ;; (increment indicator-size maximum minimum orientation update-delay value compress-exposures)
 ;; then all "features" must be derived from these inputs.
-;; 
+;;
 ;;  To provide numeric visual feedback of the current value is desirable,
 ;; but providing this as a typein field or read-only field really requires a label
 ;; or else the displayed result is somewhat confusing.
 ;;  The current value will be implemented as AUTOMATIC tick-marks and tick-mark
 ;; labels based on the min-max values and the space available to print them. The
 ;; actual current value will not be printed but will be discernable by "reading the scale".
-;; 
+;;
 ;; Thus the slider parts implemented are :
 ;; 	(bar, drag-box, (automatic) tick-marks, (automatic) tick-text)
 ;; and the following will NOT be provided :
 ;;  	(End boxes, labels, typein fields, non-numeric text of any kind)
 ;; This means that the read-only min-max current-value fields will be provided only by way
 ;; of the min-/max tick-mark tick-text labels.
-;; 
+;;
 ;;  When horizontal sliders require max (or min) values of more than 2 digits
 ;; then the tick-mark & tick-mark-number-labels are difficult to display. In this
 ;; case a :vertical orientation is more appropriate. If more than 2-digits are used
 ;; for a :horizontal slider then the tick-mark granularity will be reduced in order
 ;; to accommodate the width of the digits.
-;; 
+;;
 
 (defcontact slider (core contact)
   ((increment 	:type 		number
 	 	:reader		scale-increment		;; SETF method defined below
 		:initarg	:increment
 	 	:initform 	1)
-   
+
    (indicator-size		;; The size of the distance between tick-marks in value units.
                                 ;; :off means "no tickmarks or tick labels", 1 will cause tick-mark
 			        ;; overlap if there is not enough space to display. [2..N] will
-				;; cause a tick-spacing of [1..(1- N)]. 
-				;; 
+				;; cause a tick-spacing of [1..(1- N)].
+				;;
                 :type 		(or number (member :off)) ;; 0 means "automatic" tick mark spacing.
 		:reader		scale-indicator-size	;; SETF method defined below
 		:initarg	:indicator-size
 		:initform 	0)
-   
+
    (maximum 	:type 		number
 	 	:reader		scale-maximum		;; SETF method defined below
 		:initarg	:maximum
 	 	:initform 	1)
-   
+
    (minimum 	:type 		number
 	 	:reader		scale-minimum		;; SETF method defined below
 		:initarg	:minimum
 	 	:initform 	0)
-   
+
    (orientation :type 		(member :horizontal :vertical)
 	 	:reader		scale-orientation	;; SETF method defined below
 		:initarg	:orientation
 	 	:initform 	:horizontal)
-   
+
    (update-delay :type		(or number (member :until-done))
 		 :reader	scale-update-delay	;; SETF method defined below
 		 :initarg	:update-delay
 		 :initform	0)
-   
+
    (value 	:type 		number
 	 	:reader		scale-value	;; SETF method defined below
 		:initarg	:value
 	 	:initform 	0)
-   
-   (compress-exposures 
+
+   (compress-exposures
                 :initform       :on
 		:type           (member :off :on)
 		:reader         contact-compress-exposures
@@ -144,9 +139,9 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 
    (middle-length  :type        number)	 ;; pixel length between first & last tick marks
    )
-  
+
   (:resources
-    increment indicator-size maximum minimum orientation update-delay value 
+    increment indicator-size maximum minimum orientation update-delay value
     (border-width :initform 0)
     (event-mask   :initform #.(make-event-mask :exposure :pointer-motion-hint))))
 
@@ -161,26 +156,26 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
   (with-slots (orientation width height) slider
     (unless (eq orientation new-orientation)
       (check-type new-orientation (member :horizontal :vertical))
-      
+
       (setf orientation new-orientation)
-      
+
       (multiple-value-bind (new-width new-height)
 	  (preferred-size slider :width height :height width)
 	(change-geometry slider :width new-width :height new-height :accept-p t))))
-  
+
   new-orientation)
 
 (defmethod (setf scale-update-delay) (new-update-delay (slider slider))
   (with-slots (update-delay) slider
     (assert (or (eq new-update-delay :until-done)
 		(and (numberp new-update-delay) (not (minusp new-update-delay)))) (new-update-delay)
-	    "~a is neither :UNTIL-DONE or a non-negative number." new-update-delay)    
+	    "~a is neither :UNTIL-DONE or a non-negative number." new-update-delay)
     (setf update-delay new-update-delay)))
 
 (defmethod (setf scale-value) (new-value (slider slider))
   (scale-update slider :value new-value)
-  new-value) 
-    
+  new-value)
+
 (defmethod (setf scale-minimum) (new-minimum (slider slider))
   (scale-update slider :minimum new-minimum)
   new-minimum)
@@ -216,7 +211,7 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 
 (defun slider-margin (slider margin)
   "Returns the MARGIN of SLIDER, one of :min :top :text :max"
-  ;; This is initially *slider-default-margin* until
+  ;; This is initially +slider-default-margin+ until
   ;; after the PREFERRED-SIZE method is called. Then margins include
   ;; any additional increase due to a width or height larger than the
   ;; preferred size. :LEFT means the left margin for this particular orientation.
@@ -226,7 +221,7 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
       (or (getf margins margin)
 	  ;;  Calling before margins are setup is never
 	  ;;  done but code is here for completeness
-	  *slider-default-margin*)))
+	  +slider-default-margin+)))
 
 (defun first-tick-offset (slider)
   ;; Offset, not including (slider-margin slider :min), from
@@ -234,7 +229,7 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
   (with-slots (min-text-width orientation font dimensions indicator-size) slider
     (let ((tick-mark-offset (slidebar-tick-mark-offset dimensions))
 	   (gap (slidebar-gap dimensions)))
-      (+ *slider-default-margin*
+      (+ +slider-default-margin+
 	 ;;  Add GAP below since drag-box clear-gap-around extends past bar edge
 	 (if (eq :off indicator-size)
 	     (+ gap tick-mark-offset)
@@ -249,14 +244,14 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
   (with-slots (max-text-width orientation font dimensions indicator-size) slider
     (let ((tick-mark-offset (slidebar-tick-mark-offset dimensions))
 	  (gap (slidebar-gap dimensions)))
-      (+ *slider-default-margin*
+      (+ +slider-default-margin+
 	 ;;  Add GAP below since drag-box clear-gap-around extends past bar edge
 	 (if (eq :off indicator-size)
 	     (+ gap tick-mark-offset)
 	     (if (eq orientation :horizontal)
 		 (max (ceiling max-text-width 2) (+ gap tick-mark-offset))
 		 (+ tick-mark-offset
-		    (max gap 
+		    (max gap
 			 ;; font-ascent may go beyond end of bar MAX if font is bigger than "point" requested
 			 (abs (- (cadr (getf (slidebar-bar-text-offset dimensions) orientation))
 				 (max-char-ascent font)
@@ -268,18 +263,18 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 ;;  Pixels :                          Scale Units :
 ;;
 ;; middle-length                   (- maximum minimum)
-;;   
-;;  [MAX]                               
-;;    |                                 
-;;    |                                 
+;;
+;;  [MAX]
+;;    |
+;;    |
 ;;    |              proportional       [MAX]
 ;;    |    -                              |
 ;;    |                                   |
 ;;    |   Pixel-delta                     |    -
 ;;    |                                   |    Scale-delta
-;;    |                                   |  
+;;    |                                   |
 ;;  [MIN]  -                            [MIN]  -
-;;  
+;;
 ;;    0                                 minimum
 ;;
 ;; Since :
@@ -291,7 +286,7 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 ;; Pixel-delta = (* scale-delta middle-length) / (- maximum minimum)
 ;;
 ;; And :
-;; 
+;;
 ;; Scale-delta = (* pixel-delta (- maximum minimum)) / middle-length
 ;;
 (defun units-to-pixels (slider scale-delta)
@@ -307,7 +302,7 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
     (/ (* pixel-delta (- maximum minimum))
        middle-length)))
 
-;; NOTE: The functions named ????-x and below return values strictly for a :horizontal 
+;; NOTE: The functions named ????-x and below return values strictly for a :horizontal
 ;; slider and the return values must be translated for a :vertical slider.
 
 (defun first-tick-x (slider)
@@ -333,7 +328,6 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 	 ))))
 
 (defun drag-box-position (slider &optional (scale-value (scale-value slider)))
-  (declare (values x y width height))
   (with-slots (orientation ) slider
     ;; Return values describing area of drag-box for SCALE-VALUE
     (let* ((drag-min-edge (drag-box-min-x slider scale-value))
@@ -342,16 +336,16 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 
       (if (eq orientation :horizontal)
 	  (values drag-min-edge
-		  (+ (slider-margin slider :top) *slider-default-margin*)
+		  (+ (slider-margin slider :top) +slider-default-margin+)
 		  (image-width drag-image)
 		  (image-height drag-image))
-	  (values (+ (slider-margin slider :top) *slider-default-margin*)
+	  (values (+ (slider-margin slider :top) +slider-default-margin+)
 		  (translate-x-to-y drag-min-edge (image-height drag-image) slider)
 		  (image-width drag-image)
 		  (image-height drag-image)))
       )))
 
-  
+
 (defmethod scale-update ((slider slider) &key value minimum maximum indicator-size increment)
   ;; Called by (method initialize-instance :after (slider)) to do error checking, and by
   ;; SETF methods for slots in arglist above, and by (setf scale-value) called to move slider.
@@ -404,7 +398,7 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
       ;;  Once VALUE & INCREMENT are valid we can align VALUE, if necessary,
       ;;  to be a multiple of INCREMENT.
       (setq value (+ minimum (align (value-length value minimum) increment)))
-      
+
       (setf current-min minimum
 	    current-max maximum
 	    current-val value
@@ -424,22 +418,22 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 		   (and old-inc
 			(not (= old-inc current-inc))))
 	       (clear-area slider :exposures-p t))
-	      
-	      ((and old-val ;; when called with NEW increment value 
+
+	      ((and old-val ;; when called with NEW increment value
 		    (not (= old-val current-val))) ;; when something has changed
-	       
+
 	       ;; Compute area of old drag-box ( if any )
 	       (multiple-value-bind (old-x old-y old-width old-height)
 		   (drag-box-position slider old-val)
-		 
-		 ;; Compute area of new drag-box 
+
+		 ;; Compute area of new drag-box
 		 (multiple-value-bind (x y width height)
 		     (drag-box-position slider current-val)
-		   
+
 		   ;; Merge areas to redisplay : new drag-box, bar between old & new,
 		   ;; old drag-box ( if any ), & tick marks obscured by drag-box
 		   (when old-val
-		     (if (eq orientation :horizontal)		  
+		     (if (eq orientation :horizontal)
 			 (setf width (+ (abs (- x old-x)) (max old-width width))
 			       x (min x old-x))
 			 (setf height (+ (abs (- y old-y)) (max old-height height))
@@ -464,7 +458,7 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
   ;; ... does NOT include (slider-margin slider :top) ...
   ;; and 1-pixel past the bottom (right) edge of the slidebar
   (with-slots (dimensions) slider
-    (+ *slider-default-margin*
+    (+ +slider-default-margin+
        (slidebar-gap dimensions)
        (slidebar-bar-drag-offset dimensions)
        (slidebar-bar-thickness dimensions))))
@@ -478,20 +472,20 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 	  (y (second (getf (slidebar-bar-text-offset dimensions) orientation)))
 	  (scale (contact-scale slider)))
       (if (eq :off indicator-size)
-	  (+ *slider-default-margin*
+	  (+ +slider-default-margin+
 	     (if (eq orientation :horizontal)
 		 (image-height (getf (getf *slider-drag-box-images* orientation) scale))
 		 (image-width  (getf (getf *slider-drag-box-images* orientation) scale)))
-	     *slider-default-margin*) ;; no space allocated for tick marks & text
+	     +slider-default-margin+) ;; no space allocated for tick marks & text
 	  ;; else
 	  (if (eq orientation :horizontal)
-	      (+ (bar-bottom-offset slider) y 
+	      (+ (bar-bottom-offset slider) y
 		 (if include-text-p
-		     (+ (max-char-descent font) *slider-default-margin*)
+		     (+ (max-char-descent font) +slider-default-margin+)
 		     0))
-	      (+ (bar-bottom-offset slider) x 
+	      (+ (bar-bottom-offset slider) x
 		 (if include-text-p
-		     (+ (max min-text-width max-text-width) *slider-default-margin*)
+		     (+ (max min-text-width max-text-width) +slider-default-margin+)
 		     0)))))))
 
 (defun slider-compute-margins (slider)
@@ -505,13 +499,13 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 	   (size          (if (eq orientation :horizontal) height width))
 	   (top-margin    (floor (- size total-min-thickness) 2))
 	   (bottom-margin (- size total-min-thickness top-margin)))
-      
+
       (setf (getf (getf (window-plist slider) :slider-info) :margins)
 	    ;; left top bottom right (horizontal)
 	    (list :min 0 :top top-margin :text bottom-margin :max 0))
 
       ;; With margins set we can now compute and save middle-length for efficiency
-      (setf middle-length 
+      (setf middle-length
 	    (- (if (eq :horizontal orientation)
 		   width
 		   height)
@@ -528,12 +522,12 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 
     (setq font (find-font slider *default-display-text-font*)
 	  dimensions (getf *slider-dimensions* (contact-scale slider)))
-    
+
     (scale-update slider) ;; do some error checking, set min-text-width, etc.
 
-    ;;  Initialize required geometry				 
+    ;;  Initialize required geometry
     (multiple-value-setq (width height) (preferred-size slider))
-    
+
     ;; Compute margins now that WIDTH & HEIGHT are known
     (slider-compute-margins slider)
     ))
@@ -569,7 +563,7 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
     (let* ((drag-box-width   (slidebar-drag-box-width dimensions))
 	   (tick-mark-offset (slidebar-tick-mark-offset dimensions))
 
-	   ;;  Min width  of slider with 2 positions = double size of drag box 
+	   ;;  Min width  of slider with 2 positions = double size of drag box
 	   (minimum-double-width
 	     (+ (- (first-tick-offset slider) tick-mark-offset)
 		(max (* 2 drag-box-width)
@@ -578,7 +572,7 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 			 (if (eq orientation :horizontal)
 			     ;; room needed to display text between first/last-tick
 			     (+ (ceiling min-text-width 2)
-				(max-char-descent font) 
+				(max-char-descent font)
 				(floor max-text-width 2))
 			     ;; room needed to display 2 text lines (min & max) vertically,
 			     ;; plus a small gap between
@@ -586,7 +580,7 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 				(max-char-descent font) ;; gap between
 				(max-char-ascent font)))))
 		(- (last-tick-offset slider) tick-mark-offset)))
-	   
+
 	   ;; Calculate geometry assuming :horizontal orientation
 	   (preferred-height
 	     (max
@@ -597,7 +591,7 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 
 	       ;; Total thickness of horizontal bar
 	       (fixed-thickness slider :include-text-p t)))
-	     
+
 	   (preferred-width
 	     (max
 	       ;; Suggested or current width
@@ -635,7 +629,7 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 
 (defun slider-press (slider)
   (with-event (x y)
-    
+
     (with-slots
       (foreground orientation update-delay minimum maximum
        increment width height display value dimensions)
@@ -643,15 +637,15 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 
       (let (*slider-pressed-p* )
 	(declare (special *slider-pressed-p*))
-		   
+
 	(multiple-value-bind (drag-x drag-y drag-width drag-height)
 	  (drag-box-position slider)
-	
+
 	(when
 	  (cond
 	    ((and (>= x drag-x) (< x (+ drag-x drag-width))
 		  (>= y drag-y) (< y (+ drag-y drag-height)))
-	     
+
 	     ;; SELECT on drag box
 	     (let ((*highlight-pixel* (logxor foreground (contact-current-background-pixel slider)))
 		   (gap (slidebar-gap dimensions)))
@@ -660,21 +654,21 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 		 (gc :drawable slider
 		     :function boole-xor
 		     :foreground *highlight-pixel*)
-		 
+
 		 ;; Highlight drag area
-		 (highlite-drag-box slider gc drag-x drag-y drag-width drag-height gap)  
-		 
+		 (highlite-drag-box slider gc drag-x drag-y drag-width drag-height gap)
+
 		 ;; Set timer for update
 		 (when (and (numberp update-delay) (plusp update-delay))
 		   (add-timer slider :update-delay update-delay))
-		 
+
 		 (apply-callback slider :begin-continuous)
 		 (catch :release
 		   (let ((*previous-position* (if (eq :vertical orientation) y x)))
 		     (declare (special *previous-position*))
 		     (loop (process-next-event display))))
 		 (apply-callback slider :end-continuous)
-		 
+
 		 ;; Unhighlight drag area.
 		 (multiple-value-bind (new-drag-x new-drag-y)
 		     (drag-box-position slider)
@@ -702,20 +696,20 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 	   ;; position, thus inadvertently reversing the increment direction.
 	   ;; Synchronize by using current pointer position, not click position.
 	   (multiple-value-bind (ptr-x ptr-y) (pointer-position slider)
-	     
+
 	     (let ((delta (if (if (eq orientation :horizontal)
 				  (< ptr-x drag-x)
-				  (>= ptr-y (+ drag-y drag-height))) 
+				  (>= ptr-y (+ drag-y drag-height)))
 			      (- increment)
-			      increment))		
+			      increment))
 		   (gap   (slidebar-gap dimensions)))
-	       
+
 	       (slider-increment-value slider delta)
-	       
+
 	       ;; Must warp pointer to stay in MIN (or MAX) bar, if necessary
 	       (multiple-value-bind (new-drag-x new-drag-y drag-width drag-height)
 		   (drag-box-position slider)
-		 
+
 		 (multiple-value-bind (warp-x warp-y)
 		     (if (eq orientation :horizontal)
 			 (if (plusp delta)
@@ -725,7 +719,7 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 			     (let ((max-x (max 0 (- new-drag-x gap))))
 			       (when (< max-x ptr-x)
 				 (values max-x ptr-y))))
-			 
+
 			 (if (minusp delta)
 			     (let ((min-y (min (1- height) (+ new-drag-y drag-height gap))))
 			       (when (< ptr-y min-y)
@@ -737,7 +731,7 @@ X-WIDTH is the width in x-direction that must be changed into a y-offset."
 		     (warp-pointer slider warp-x warp-y))))))
 	   t))
 
-	  ;; Report final value, if necessary		   		    
+	  ;; Report final value, if necessary
 	  (unless (eql 0 update-delay)
 	    (delete-timer slider :update-delay)
 	    (apply-callback slider :new-value value))))))))
@@ -766,18 +760,18 @@ and (possibly) cause the slider to be updated."
 (defun slider-handle-motion (slider)
   (declare (special *previous-position*))
   (when (boundp '*previous-position*)
-    (with-slots (orientation increment) slider   
-      (with-event (state x y)       
+    (with-slots (orientation increment) slider
+      (with-event (state x y)
 	(multiple-value-bind (ptr-x ptr-y)
 	    ;;  Is :button-1 still down?
 	    (if (plusp (logand state #.(make-state-mask :button-1)))
-		
+
 		;; Yes, query current pointer position
 		(pointer-position slider)
-		
+
 		;; No, use final x,y returned for button transition
 		(values x y))
-	  
+
 	  (let
 	    ((modulo-increment
 	       (* (truncate
@@ -785,13 +779,13 @@ and (possibly) cause the slider to be updated."
 		      slider
 		      (if (eq :horizontal orientation)
 			  (- ptr-x *previous-position*)
-			  
+
 			  ;; Must swap order of subtraction since positive y direction
 			  ;; is negative scale direction for :vertical slider
 			  (- *previous-position* ptr-y)))
 		    increment)
 		  increment)))
-	    
+
 	    ;;  Convert the pixel motion to a suitable slider scale motion
 	    (unless (zerop modulo-increment)
 	      (slider-increment-value slider modulo-increment)
@@ -806,8 +800,6 @@ and (possibly) cause the slider to be updated."
 (defun choose-indicator-size (slider)
   "Returns TICK-LIMIT = the number of ticks to draw."
   ;; Called when indicator-size eq :off to automatic tick-marks
-  (declare (values tick-limit increments-in-tick))
-
   (with-slots (maximum minimum increment) slider
     (let* ((tick-mark-thickness (slider-tick-mark-thickness slider))
 	   (increments-in-tick	1)
@@ -825,32 +817,32 @@ and (possibly) cause the slider to be updated."
 		   (setq ticks-visible ticks)))
 		;; Exit form
 		(return ticks-visible))
-	    	  
+
 	    (setq ticks (floor ticks 2)
 		  increments-in-tick (* 2 increments-in-tick))))
 
 	increments-in-tick ;; 2nd return value
-	)))) 
+	))))
 
 ;;;----------------------------------------------------------------------------+
 ;;;                                                                            |
 ;;;                               Display                                      |
 ;;;                                                                            |
 ;;;----------------------------------------------------------------------------+
-;;; d1 = first-tick-x 
-;;; d2 = slidebar-tick-mark-offset 
-;;; 
+;;; d1 = first-tick-x
+;;; d2 = slidebar-tick-mark-offset
+;;;
 ;;;     min  fill  drag   empty   max
 ;;; +-----------------------------------+ -
 ;;; |                                   |  gap
 ;;; |             +----+                | -
-;;; |             |   ||                |  drag-bar-offset 
+;;; |             |   ||                |  drag-bar-offset
 ;;; |   .-- ----- |   || -------- --.   | -
 ;;; |   |** ***** |   ||            |   |  bar-thickness
 ;;; |   `-- ----- |   || -------- --'   | -
 ;;; |             |---+|                |
 ;;; |<----->      +----+                |
-;;; | d1  ||        ||           ||     |  bar-text-offset	
+;;; | d1  ||        ||           ||     |  bar-text-offset
 ;;; |   <-->                            |
 ;;; |     d2                            |
 ;;; |    MIN                     MAX    |
@@ -864,8 +856,8 @@ and (possibly) cause the slider to be updated."
 ;;;     || +--------------------------- first-tick-x
 ;;;     |+-----------------------------   (<= bar-min-x MIN-LOWER-EDGE first-tick-x )
 ;;;     +------------------------------ bar-min-x
-;;; 
-;;; Note: No margins are shown except *slider-default-margin* 
+;;;
+;;; Note: No margins are shown except +slider-default-margin+
 ;;;
 ;;;
 ;;;    .--.
@@ -890,8 +882,8 @@ and (possibly) cause the slider to be updated."
 ;;;    |**|   min
 ;;;    `--'
 ;;;
-  
-(defmethod display ((slider slider) &optional at-x at-y at-width at-height &key) 
+
+(defmethod display ((slider slider) &optional at-x at-y at-width at-height &key)
   (with-slots (dimensions width height foreground orientation
 			  minimum maximum increment middle-length sensitive
 			  min-text-width max-text-width indicator-size font) slider
@@ -908,7 +900,7 @@ and (possibly) cause the slider to be updated."
 	   (image-half-size (floor (image-width bar-image) 2))  ;; image is BOTH ends, use min half
 	   (first-tick-x    (first-tick-x slider))
 	   (last-tick-x     (+ first-tick-x middle-length))
-	   (bar-y           (+ (slider-margin slider :top) *slider-default-margin*
+	   (bar-y           (+ (slider-margin slider :top) +slider-default-margin+
 			       gap drag-bar-offset))
 	   (bar-min-x       (- first-tick-x ;; ZRP
 			       (slidebar-tick-mark-offset dimensions)))
@@ -947,7 +939,7 @@ and (possibly) cause the slider to be updated."
 	;; the half-width of the drag-box to get the coordinate of the left edge.
 	;; Actually the image blt to the slider also contains a gap, but the ZRP is
 	;; situated such that it centers the drag-box at the extreme min position.
-	
+
 	;;  Draw (at least part of) MIN
 	(when (> drag-min-edge bar-min-x) ;; drag-box is NOT less than gap away from MIN edge
 	  (multiple-value-bind (src-x src-y -width -height dst-x dst-y)
@@ -960,7 +952,7 @@ and (possibly) cause the slider to be updated."
 	      (if inactive-p
 		  (draw-rectangle slider gc dst-x dst-y -width -height :fill-p)
 		  (copy-area mask gc src-x src-y -width -height slider dst-x dst-y))))
-	  	  
+
 	  ;; Draw FILL, if any
 	  (when (> drag-min-edge min-lower-edge)
 	    (multiple-value-bind (x y -width -height)
@@ -971,7 +963,7 @@ and (possibly) cause the slider to be updated."
 	    (when (area-overlaps-p at-x at-y at-width at-height x y -width -height)
 	      (draw-rectangle slider gc x y -width -height :fill-p))))
 	    )
-	
+
 	;; Draw EMPTY portion, if any
 	(when (> max-upper-edge drag-max-edge)
 	  (multiple-value-bind (x y x2 y2 x3 y3 x4 y4)
@@ -1014,7 +1006,7 @@ and (possibly) cause the slider to be updated."
 				  (fixed-thickness slider :include-text-p nil)))
 		(text-x-offset (first  (getf (slidebar-bar-text-offset dimensions) orientation)))
 		(text-y-offset (second (getf (slidebar-bar-text-offset dimensions) orientation))))
-	    
+
 	    (multiple-value-bind (x-min y-min x-max y-max)
 		(if (eq orientation :horizontal)
 		    (values (+ (slider-margin slider :min)
@@ -1050,10 +1042,10 @@ and (possibly) cause the slider to be updated."
 					   x-max (- y-max font-ascent)
 					   (max min-text-width max-text-width)
 					   (+ (- y-min y-max) font-height)))
-		  ;; Draw TICK-TEXT for min and max	    
+		  ;; Draw TICK-TEXT for min and max
 		  (draw-glyphs slider gc x-min y-min (format nil "~a" minimum))
 		  (draw-glyphs slider gc x-max y-max (format nil "~a" maximum))))))
-	  
+
 	  ;; Draw TICK-MARKS
 	  (multiple-value-bind (tick-limit increments-in-tick)
 	      (if (plusp indicator-size)
@@ -1069,7 +1061,7 @@ and (possibly) cause the slider to be updated."
 			     (bar-bottom-offset slider)
 			     (slider-bar-tick-gap slider)))
 		  (tick-height (slidebar-tick-mark-length dimensions)))
-		 
+
 		 ((= tick tick-limit)) ;; draw tick @min plus TICK-LIMIT more
 
 	      (multiple-value-bind (x y -width -height)
@@ -1085,7 +1077,7 @@ and (possibly) cause the slider to be updated."
 
 	;; Draw DRAG BOX (possibly over a tick mark)
 	(let ((drag-image (getf (getf *slider-drag-box-images* orientation) scale)))
-	  (setq mask (contact-image-mask slider drag-image 
+	  (setq mask (contact-image-mask slider drag-image
 					 :foreground foreground
 					 :background (contact-current-background-pixel slider)))
 	  (multiple-value-bind (src-x src-y -width -height dst-x dst-y)
@@ -1105,7 +1097,7 @@ and (possibly) cause the slider to be updated."
 		(special-highlite-drag-box slider gc dst-x dst-y -width -height gap)))))))))
 
 ;;; Crock! This function could be inlined, except that causes the Explorer compiler
-;;; to barf on (method display (slider)) when using R4 CLX. 
+;;; to barf on (method display (slider)) when using R4 CLX.
 (defun special-highlite-drag-box (slider gc dst-x dst-y -width -height gap)
   (declare (special *highlight-pixel*))
   (with-gcontext (gc :function boole-xor :foreground *highlight-pixel*)
